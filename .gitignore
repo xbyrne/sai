@@ -3,7 +3,7 @@
 *~
 
 ## Original GGchem files
-#GGchem
+# GGchem
 GGchem/.gitignore
 GGchem/abund_SharpHuebner.dat
 GGchem/abund_simple.in
@@ -13,7 +13,6 @@ GGchem/demo_eqcond.pdf
 GGchem/ggchem
 GGchem/GGchemPaper.pdf
 GGchem/GGCHEM_talk.pdf
-GGchem/input
 GGchem/LICENSE
 GGchem/mfrac_BSE_15water.dat
 GGchem/mfrac_BSE_8water.dat
@@ -26,12 +25,12 @@ GGchem/mfrac_schaefer_CC.dat
 GGchem/README.md
 GGchem/results
 GGchem/src16
-GGchem/structures
-#GGchem/tools
+
+# GGchem/tools
 GGchem/tools/analyse_fort99.py
 GGchem/tools/kp_compare.py
 GGchem/tools/lapse_rate.py
-#GGchem/tools/make_abund.py
+# GGchem/tools/make_abund.py
 GGchem/tools/phasedia2.pro
 GGchem/tools/phasedia3.pro
 GGchem/tools/phasedia.pro
@@ -48,3 +47,37 @@ GGchem/tools/Plot_structure.py
 GGchem/tools/Plot_tea.py
 GGchem/tools/Plot_T.py
 GGchem/tools/Plot_triangle.py
+
+# GGchem/input
+GGchem/input/AutoStruc.in
+GGchem/input/AutoStrucVenus.in
+GGchem/input/crash.in
+GGchem/input/default_Burcat.in
+GGchem/input/default.in
+GGchem/input/model_0D.in
+GGchem/input/model_2D.in
+GGchem/input/model_benchmark1.in
+GGchem/input/model_benchmark2.in
+GGchem/input/model_Crich.in
+GGchem/input/model_fast.in
+GGchem/input/model_Jupiter.in
+GGchem/input/model_ProDiMo.in
+GGchem/input/model_pureH2O.in
+GGchem/input/model_remove_eqcond.in
+GGchem/input/model_standard_eqcond.in
+GGchem/input/model_standard.in
+# GGchem/input/model_Venus_struc.in
+GGchem/input/OliverProblem.in
+GGchem/input/TestCases
+GGchem/input/testSharpHuebner.in
+
+# GGchem/structures
+GGchem/structures/EarthHighResFit.dat
+GGchem/structures/jup_t100_g25_Helling.dat
+GGchem/structures/Jup-T-p.dat
+GGchem/structures/lte_1200_3.0-0.0_cutforpegas
+GGchem/structures/lte_1500_3.0-0.0_cutforpegas
+GGchem/structures/sat_t78_g11_Helling.dat
+GGchem/structures/tp_w18.txt
+# GGchem/structures/VenusHighResFit.dat
+GGchem/structures/weather.dat
