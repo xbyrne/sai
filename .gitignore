@@ -3,7 +3,8 @@
 *~
 
 ## Original GGchem files
-GGchem
+#GGchem
+GGchem/.gitignore
 GGchem/abund_SharpHuebner.dat
 GGchem/abund_simple.in
 GGchem/data
@@ -26,4 +27,24 @@ GGchem/README.md
 GGchem/results
 GGchem/src16
 GGchem/structures
-GGchem/tools
+#GGchem/tools
+GGchem/tools/analyse_fort99.py
+GGchem/tools/kp_compare.py
+GGchem/tools/lapse_rate.py
+#GGchem/tools/make_abund.py
+GGchem/tools/phasedia2.pro
+GGchem/tools/phasedia3.pro
+GGchem/tools/phasedia.pro
+GGchem/tools/Plot_benchmark1.py
+GGchem/tools/Plot_benchmark2.py
+GGchem/tools/Plot_CzuO.py
+GGchem/tools/Plot_fast.py
+GGchem/tools/Plot_logp.py
+GGchem/tools/Plot_logT.py
+GGchem/tools/Plot_paper.py
+GGchem/tools/Plot_phase.py
+GGchem/tools/Plot_seq.py
+GGchem/tools/Plot_structure.py
+GGchem/tools/Plot_tea.py
+GGchem/tools/Plot_T.py
+GGchem/tools/Plot_triangle.py
