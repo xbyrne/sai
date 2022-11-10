@@ -665,7 +665,7 @@ GGchem/structures/lte_1500_3.0-0.0_cutforpegas
 GGchem/structures/sat_t78_g11_Helling.dat
 GGchem/structures/tp_w18.txt
 GGchem/structures/weather.dat
-GGchem/tools
+#GGchem/tools
 GGchem/tools/Plot_CzuO.py
 GGchem/tools/Plot_T.py
 GGchem/tools/Plot_benchmark1.py
