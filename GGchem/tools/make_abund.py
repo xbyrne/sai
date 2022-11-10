@@ -25,7 +25,7 @@ nS3    =   5.E-9             # 0.04 - 21
 nS4    =   5.E-9             # 1 - 9
 nH2SO4 =   0.E-6             # 0 - 3
 nNO    =  5.5E-9             # 4 - 7
-nO2    = (16.E-6 + 50.E-6)   # 8 - 24
+nO2    = 26.794163           # 8 - 24
 nSF6   = 200.E-9             # 100 - 300
 nHe    =  12.E-6             # 6 - 36 
 nNe    =   5.E-6
@@ -205,7 +205,7 @@ print "He ",12+np.log10(epsHe/epsH)
 print "Ne ",12+np.log10(epsNe/epsH)
 print "Ar ",12+np.log10(epsAr/epsH)
 
-f = open('abund.in','w')
+f = open('abund_Venus.in','w')
 if (epsH>0):
   f.write("H  %.9f \n"%(12+np.log10(epsH /epsH)))
 if (epsC>0):
@@ -251,7 +251,7 @@ mtot = epsH*massH + epsHe*massHe + epsC*massC + epsO*massO + epsN*massN + epsS*m
      + epsCa*massCa + epsAl*massAl + epsNa*massNa + epsK*massK + epsTi*massTi \
      + epsMn*massMn + epsNe*massNe + epsAr*massAr
 
-f = open('mfrac.in','w')
+f = open('mfrac_Venus.in','w')
 if (epsH>0):
   f.write("H   %.9e \n"%((epsH *massH )/mtot))
 if (epsC>0):
