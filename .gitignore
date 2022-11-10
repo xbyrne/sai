@@ -682,7 +682,7 @@ GGchem/tools/Plot_triangle.py
 GGchem/tools/analyse_fort99.py
 GGchem/tools/kp_compare.py
 GGchem/tools/lapse_rate.py
-GGchem/tools/make_abund.py
+#GGchem/tools/make_abund.py
 GGchem/tools/phasedia.pro
 GGchem/tools/phasedia2.pro
 GGchem/tools/phasedia3.pro
