@@ -20,7 +20,7 @@ abund_Venus.in
 # model options
 1		! model_dim  (0,1,2)
 7		! model_struc
-VenusHighResFit.dat
+VenusSurfaceExtrapFit.dat
 .true.		! model_pconst
 #90.0		! pmax [bar]
 #90.0		! pmin [bar]
