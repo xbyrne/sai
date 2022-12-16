@@ -3,12 +3,17 @@ venus/.ipynb_checkpoints/*
 *.ipynb_checkpoints/*
 *~
 grid/__pycache__/*
+grid/.ipynb_checkpoints/*
+
+## Big files, compressed version in the repo somewhere else
+grid/grid_output.dat
 
 ## Original GGchem files
 # GGchem
 GGchem/.gitignore
 GGchem/abund_SharpHuebner.dat
 GGchem/abund_simple.in
+GGchem/data
 GGchem/database.dat
 GGchem/demo_eqchem.pdf
 GGchem/demo_eqcond.pdf
