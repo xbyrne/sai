@@ -2,18 +2,23 @@
 venus/.ipynb_checkpoints/*
 *.ipynb_checkpoints/*
 *~
+grid/__pycache__/*
 
 ## Original GGchem files
 # GGchem
 GGchem/.gitignore
 GGchem/abund_SharpHuebner.dat
 GGchem/abund_simple.in
-GGchem/data
+GGchem/database.dat
 GGchem/demo_eqchem.pdf
 GGchem/demo_eqcond.pdf
+GGchem/fatal.case
+GGchem/fort.60
+GGchem/fort.97
 GGchem/ggchem
 GGchem/GGchemPaper.pdf
 GGchem/GGCHEM_talk.pdf
+GGchem/Last_abund.in
 GGchem/LICENSE
 GGchem/mfrac_BSE_15water.dat
 GGchem/mfrac_BSE_8water.dat
@@ -25,6 +30,9 @@ GGchem/mfrac_schaefer_BSE.dat
 GGchem/mfrac_schaefer_CC.dat
 GGchem/README.md
 GGchem/results
+GGchem/Static_Conc.dat
+GGchem/Static_Conc_2D.dat
+GGchem/Structure.dat
 GGchem/src16
 
 # GGchem/tools
