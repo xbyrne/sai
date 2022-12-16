@@ -29,5 +29,5 @@ abund_Venus.in
 0		! verbose
 2000	 	! Tmin [K]
 650		! Tmax [K]
-4.75081e+01	! pmin [bar]
-4.75081e+01	! pmax [bar]
+1.00000e+04	! pmin [bar]
+1.00000e+04	! pmax [bar]
