@@ -2,13 +2,13 @@
 *~
 *.ipynb
 .vscode/*
-*__pycache__/*
-# grid/__pycache__/*
-# mymodules/__pycache__/*
-*.ipynb_checkpoints/*
-# grid/.ipynb_checkpoints/*
-# petitRADTRANS/.ipynb_checkpoints/*
-# venus/.ipynb_checkpoints/*
+__pycache__/*
+grid/__pycache__/*
+mymodules/__pycache__/*
+.ipynb_checkpoints/*
+grid/.ipynb_checkpoints/*
+petitRADTRANS/.ipynb_checkpoints/*
+venus/.ipynb_checkpoints/*
 
 ## Big files, compressed version in the repo somewhere else
 grid/grid_output.dat
