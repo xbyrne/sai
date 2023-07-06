@@ -408,7 +408,8 @@ def create_ggchem_results_df(results_file):
     df_processed = df_masked.copy()
     df_processed.loc[gas_df.index, gas_df.columns] = gas_df
     df_processed.loc[cond_df.index, cond_df.columns] = cond_df
-
+    # Flooring <1e-300s
+    df_processed[df_processed<1e-300] = 0
     # Non-crucial relabelling/conversions of temperature/pressure columns
     df_processed.pgas = df_processed.pgas.div(1e6)  # Converting to bar
     df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
