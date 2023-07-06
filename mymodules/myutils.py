@@ -2,7 +2,9 @@
 Basic utilities
 """
 from collections import namedtuple
+import io
 import os
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -288,6 +290,130 @@ def run_GGchem(
     # Running GGchem
     os.system("bash ./run_ggchem.sh model_inhomog.in >/dev/null")
     return gather_GGchem_results()
+
+
+# Newer GGchem tools which work better - use these!
+
+
+def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
+    """
+    Creates the GGchem input file for a particular p,
+    for a given temperature range, precision, and
+    set of elemental abundances
+    """
+    if Tbounds is None:
+        Tbounds = [650, 2000]
+
+    template_text = read_from("./GGchem/input/model_Venus_template.in")
+    template_lines = template_text.split("\n")
+    filetext = ""
+    filetext += "\n".join(template_lines[:11])
+    filetext += "\n" + abund_file
+    filetext += "\n".join(template_lines[12:28])
+    filetext += "\n" + str(Npoints) + "\t\t! Npoints"
+    filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
+    filetext += "\n" + str(Tbounds[1]) + "\t\t! Tmax [K]"
+    filetext += "\n" + str(p) + "\t! pmin [bar]"
+    filetext += "\n" + str(p) + "\t! pmax [bar]" + "\n"
+
+    overwrite_to("./GGchem/input/grid_line_p.in", filetext)
+
+
+def run_ggchem_gridline():
+    """
+    Runs GGchem on the input file `grid_line_p.in`
+    """
+    os.system("cd ./GGchem && ./ggchem input/grid_line_p.in > /dev/null && cd ..")
+
+
+def run_ggchem_grid(
+    results_file, abund_file="abund_venus.in", pbounds=None, Tbounds=None, Npoints=100
+):
+    """
+    Repeatedly runs `run_ggchem_gridline()` to find the
+    abundances over the entire pT grid
+    """
+    if Tbounds is None:
+        Tbounds = [650, 2000]
+    if pbounds is None:
+        pbounds = [0.1, 1e4]
+    overwrite_to(results_file, "")  # Initialises if doesn't exist
+
+    pressures = np.logspace(np.log10(pbounds[0]), np.log10(pbounds[1]), Npoints)
+
+    for p in tqdm(pressures, total=len(pressures)):
+        create_GGchem_file_pT(
+            p, Tbounds=Tbounds, Npoints=Npoints, abund_file=abund_file
+        )
+
+        run_ggchem_gridline()  # Runs GGchem at pressure p and T between Tbounds
+
+        write_to(results_file, read_from("./GGchem/Static_Conc.dat"))
+
+
+# Managing concatenated .dat files
+def create_ggchem_results_df(results_file):
+    """
+    Creates a pandas df from the concatenated results file
+    created by `run_ggchem_grid`
+    """
+    filetext = read_from(results_file)
+    # Extracting param numbers, ensuring that they're the same on each line
+    grid_line_data = filetext.split("eps( H)")[1:]
+    param_lists = np.array(
+        [
+            [int(param) for param in line_data.split("\n")[1].split()]
+            for line_data in grid_line_data
+        ]
+    )
+    params = param_lists[0]
+    assert np.all(param_lists == params)
+
+    # Extracting gas species names, ensuring that they're also the same
+    header_list = np.array(
+        [[line_data.split("\n")[2].split()] for line_data in grid_line_data]
+    )
+    assert np.all(header_list == header_list[0])
+
+    df_string = grid_line_data[0] + "\n".join(
+        ["\n".join(line_data.split("\n")[3:]) for line_data in grid_line_data[1:]]
+    )  # First gridline plus numbers from rest
+    df_raw = pd.read_csv(io.StringIO(df_string), skiprows=2, delim_whitespace=True)
+
+    ## Processing df, removing absent species etc
+    # Removing supersaturation ratios, element ratios
+    column_mask = np.full_like(df_raw.columns, False)
+    column_mask[0] = True
+    column_mask[2] = True
+    column_mask[4 : 4 + params[0] + params[1]] = True
+    column_mask[
+        4
+        + params[0]
+        + params[1]
+        + params[2] : 4
+        + params[0]
+        + params[1]
+        + 2 * params[2]
+    ] = True
+
+    df_masked = df_raw.iloc[:, column_mask]
+    # Removing absent species
+    df_masked = df_masked.loc[:, (df_masked != -300.0).any()]
+    # Converting to VMRs and MFs
+    gas_data = df_masked.iloc[:, 2 : 2 + params[0] + params[1]]
+    cond_data = df_masked.iloc[:, 2 + params[0] + params[1] : 2 + sum(params)]
+    gas_df = (10**gas_data).div((10**gas_data).sum(axis=1), axis=0)
+    cond_df = (10**cond_data).div((10**cond_data).sum(axis=1), axis=0)
+
+    df_processed = df_masked.copy()
+    df_processed.loc[gas_df.index, gas_df.columns] = gas_df
+    df_processed.loc[cond_df.index, cond_df.columns] = cond_df
+
+    # Non-crucial relabelling/conversions of temperature/pressure columns
+    df_processed.pgas = df_processed.pgas.div(1e6)  # Converting to bar
+    df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
+
+    return df_processed
 
 
 ## ------------------------------------
