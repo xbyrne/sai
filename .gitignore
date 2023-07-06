@@ -1,0 +1,98 @@
+## Basic things to ignore
+venus/.ipynb_checkpoints/*
+*.ipynb_checkpoints/*
+*~
+grid/__pycache__/*
+grid/.ipynb_checkpoints/*
+petitRADTRANS/.ipynb_checkpoints/*
+
+## Big files, compressed version in the repo somewhere else
+grid/grid_output.dat
+
+## Original GGchem files
+# GGchem
+GGchem/.gitignore
+GGchem/abund_SharpHuebner.dat
+GGchem/abund_simple.in
+GGchem/data
+GGchem/database.dat
+GGchem/demo_eqchem.pdf
+GGchem/demo_eqcond.pdf
+GGchem/fatal.case
+GGchem/fort.60
+GGchem/fort.97
+GGchem/ggchem
+GGchem/GGchemPaper.pdf
+GGchem/GGCHEM_talk.pdf
+GGchem/Last_abund.in
+GGchem/LICENSE
+GGchem/mfrac_BSE_15water.dat
+GGchem/mfrac_BSE_8water.dat
+GGchem/mfrac_CIcond.dat
+GGchem/mfrac_melis_BSE.dat
+GGchem/mfrac_melis_CI.dat
+GGchem/mfrac_MORB.dat
+GGchem/mfrac_schaefer_BSE.dat
+GGchem/mfrac_schaefer_CC.dat
+GGchem/README.md
+GGchem/results
+GGchem/Static_Conc.dat
+GGchem/Static_Conc_2D.dat
+GGchem/Structure.dat
+GGchem/src16
+
+# GGchem/tools
+GGchem/tools/analyse_fort99.py
+GGchem/tools/kp_compare.py
+GGchem/tools/lapse_rate.py
+# GGchem/tools/make_abund.py
+GGchem/tools/phasedia2.pro
+GGchem/tools/phasedia3.pro
+GGchem/tools/phasedia.pro
+GGchem/tools/Plot_benchmark1.py
+GGchem/tools/Plot_benchmark2.py
+GGchem/tools/Plot_CzuO.py
+GGchem/tools/Plot_fast.py
+GGchem/tools/Plot_logp.py
+GGchem/tools/Plot_logT.py
+GGchem/tools/Plot_paper.py
+GGchem/tools/Plot_phase.py
+GGchem/tools/Plot_seq.py
+GGchem/tools/Plot_structure.py
+GGchem/tools/Plot_tea.py
+GGchem/tools/Plot_T.py
+GGchem/tools/Plot_triangle.py
+
+# GGchem/input
+GGchem/input/AutoStruc.in
+GGchem/input/AutoStrucVenus.in
+GGchem/input/crash.in
+GGchem/input/default_Burcat.in
+GGchem/input/default.in
+GGchem/input/model_0D.in
+GGchem/input/model_2D.in
+GGchem/input/model_benchmark1.in
+GGchem/input/model_benchmark2.in
+GGchem/input/model_Crich.in
+GGchem/input/model_fast.in
+GGchem/input/model_Jupiter.in
+GGchem/input/model_ProDiMo.in
+GGchem/input/model_pureH2O.in
+GGchem/input/model_remove_eqcond.in
+GGchem/input/model_standard_eqcond.in
+GGchem/input/model_standard.in
+# GGchem/input/model_Venus_struc.in
+GGchem/input/OliverProblem.in
+GGchem/input/TestCases
+GGchem/input/testSharpHuebner.in
+
+# GGchem/structures
+GGchem/structures/EarthHighResFit.dat
+GGchem/structures/jup_t100_g25_Helling.dat
+GGchem/structures/Jup-T-p.dat
+GGchem/structures/lte_1200_3.0-0.0_cutforpegas
+GGchem/structures/lte_1500_3.0-0.0_cutforpegas
+GGchem/structures/sat_t78_g11_Helling.dat
+GGchem/structures/tp_w18.txt
+# GGchem/structures/VenusHighResFit.dat
+GGchem/structures/weather.dat
