@@ -1,4 +1,5 @@
 ## Basic things to ignore
+\#*
 *~
 *.ipynb
 .ipynb_checkpoints/*

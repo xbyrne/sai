@@ -9,7 +9,7 @@ dispol_WoitkeRefit.dat                  ! dispol_file3
 # abundance options
 .false.		! pick_mfrac
 0		! abund_pick
-abund_Venus.in
+abund_Venus_no_Cl.in
 # equilibrium condensation
 .true.		! model_eqcond
 .true.		! phyllosilicates
@@ -28,5 +28,5 @@ abund_Venus.in
 100		! Npoints
 650		! Tmin [K]
 2000		! Tmax [K]
-10000.0	! pmin [bar]
-10000.0	! pmax [bar]
+1.6297508346206444	! pmin [bar]
+1.6297508346206444	! pmax [bar]
