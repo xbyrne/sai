@@ -291,9 +291,8 @@ def run_GGchem(
     os.system("bash ./run_ggchem.sh model_inhomog.in >/dev/null")
     return gather_GGchem_results()
 
-
-# Newer GGchem tools which work better - use these!
-
+## -------------------
+## Newer GGchem tools which work better - use these!
 
 def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
     """
@@ -332,6 +331,7 @@ def run_ggchem_grid(
     """
     Repeatedly runs `run_ggchem_gridline()` to find the
     abundances over the entire pT grid
+    Saves to `results_file`
     """
     if Tbounds is None:
         Tbounds = [650, 2000]
