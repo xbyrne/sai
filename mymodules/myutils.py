@@ -291,8 +291,10 @@ def run_GGchem(
     os.system("bash ./run_ggchem.sh model_inhomog.in >/dev/null")
     return gather_GGchem_results()
 
+
 ## -------------------
 ## Newer GGchem tools which work better - use these!
+
 
 def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
     """
@@ -409,12 +411,34 @@ def create_ggchem_results_df(results_file):
     df_processed.loc[gas_df.index, gas_df.columns] = gas_df
     df_processed.loc[cond_df.index, cond_df.columns] = cond_df
     # Flooring <1e-300s
-    df_processed[df_processed<1e-300] = 0
+    df_processed[df_processed < 1e-300] = 0
     # Non-crucial relabelling/conversions of temperature/pressure columns
     df_processed.pgas = df_processed.pgas.div(1e6)  # Converting to bar
     df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
 
     return df_processed
+
+
+def df_from_abund(abund_code, **kwargs):
+    """
+    Gets a df of all the elemental abundances in `./GGchem/{abund_code}.in`
+    Kwargs are passed to pd.read_csv
+    """
+    return pd.read_csv(
+        io.StringIO(read_from(f"./GGchem/{abund_code}.in")),
+        delim_whitespace=True,
+        names=["Element", "epsilon"],
+        index_col=0,
+        **kwargs,
+    )
+
+
+def df_to_abund(df, abund_code, **kwargs):
+    """
+    Writes a df of elemental abundances to `./GGchem/{abund_code}.in`
+    Kwargs are passed to df.to_csv
+    """
+    df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
 
 
 ## ------------------------------------
