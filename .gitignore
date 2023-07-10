@@ -73,6 +73,7 @@ GGchem/input/AutoStrucVenus.in
 GGchem/input/crash.in
 GGchem/input/default_Burcat.in
 GGchem/input/default.in
+GGchem/input/grid_line_p.in
 GGchem/input/model_0D.in
 GGchem/input/model_2D.in
 GGchem/input/model_benchmark1.in
