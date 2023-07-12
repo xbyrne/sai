@@ -3,7 +3,7 @@ Converts GGchem output into VMRs and MFs
 """
 import numpy as np
 import pandas as pd
-from mymodules import myutils
+from . import myutils
 
 # OUTPUT_FILE = '/data/ajnb3/results/grid/grid_output.dat'
 OUTPUT_FILE = '/data/ajnb3/results/grid/grid_output_moreO.dat'

@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from petitRADTRANS import Radtrans
 from petitRADTRANS import nat_cst as nc
-from mymodules import myutils
+from . import myutils
 
 # -----------------------------------------
 # Loading and dealing out data

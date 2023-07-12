@@ -10,8 +10,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import cm
-from chempy import Substance
-
 mpl.style.use("~/xbyrne.mplstyle")
 
 
@@ -74,124 +72,72 @@ def correct_GGchem_names(ggchem_names):
         return correct_names
 
 
-def elemental_abund_from_gases(gas_species_names, gas_mrs):
+def create_GGchem_file_pT(
+    filename="./GGchem/input/grid_line_p.in",
+    pbounds=None,
+    Tbounds=None,
+    Npoints=100,
+    abund_file="abund_venus.in",
+):
     """
-    Calculates the relative elemental abundances of the various gas
-        species from the formulae and their MRs
-    Inputs:
-        gas_species_names: Chemical formulae (if necessary corrected by correct_GGchem_names)
-                           of the various species
-        gas_mrs: VMRs of the various species
-    Outputs:
-        A dictionary, of the form {1: 0.2, 6: 0.4, ...} with the relative elemental
-            abundances of all the elements present
+    Creates the GGchem input file for a particular p,
+    for a given temperature range, precision, and
+    set of elemental abundances
     """
-    # Ensures that gas_mrs has the same shape as gas_species_names
-    if len(gas_mrs) != len(gas_species_names):
-        raise AssertionError(
-            f"""
-            Arrays are the wrong shape. MRs were given for {gas_mrs.shape[0]} species
-                but {len(gas_species_names)} species names were given
-            """
-        )
+    if Tbounds is None:
+        Tbounds = [650, 2000]
+    if pbounds is None:
+        pbounds = [0.1, 1e4]
 
-    overall_elemental_abundances = {}
-    gas_species_names = correct_GGchem_names(gas_species_names)
-    for gsn, vmr in zip(gas_species_names, gas_mrs):
-        species = Substance.from_formula(gsn)
-        species_composition = species.composition
-        for (
-            element_no
-        ) in species_composition:  # Iterating over keys of composition dictionary
-            elemental_composition_contribution = vmr * species_composition[element_no]
-            if element_no in overall_elemental_abundances:
-                overall_elemental_abundances[
-                    element_no
-                ] += elemental_composition_contribution
-            else:
-                overall_elemental_abundances[
-                    element_no
-                ] = elemental_composition_contribution
-
-    return overall_elemental_abundances
-
-
-element_list = {
-    1: "H",
-    6: "C",
-    7: "N",
-    8: "O",
-    9: "F",
-    16: "S",
-    17: "Cl",
-    26: "Fe",
-    25: "Mn",
-    14: "Si",
-    12: "Mg",
-    20: "Ca",
-    13: "Al",
-    11: "Na",
-    19: "K",
-    22: "Ti",
-    2: "He",
-    10: "Ne",
-    18: "Ar",
-}
-
-
-def create_GGchem_abundance_filetext(abundance_dict):
-    """
-    Creates text for an abundance file that can be used as input for GGchem.
-    Involves reformatting the abundances in the Asplund (2009) style
-    Input should be an abundance dictionary such as that outputted by
-        `elemental_abund_from_gases` routine.
-    """
+    template_text = read_from("./GGchem/input/model_Venus_template.in")
+    template_lines = template_text.split("\n")
     filetext = ""
-    for Z in abundance_dict:
-        element_symbol = element_list[Z]
-        formatted_abund = 12 + np.log10(abundance_dict[Z] / abundance_dict[1])
-        filetext += (
-            element_symbol
-            + " " * (3 - len(element_symbol))
-            + str(formatted_abund)
-            + "\n"
+    filetext += "\n".join(template_lines[:11])
+    filetext += "\n" + abund_file
+    filetext += "\n".join(template_lines[12:28])
+    filetext += "\n" + str(Npoints) + "\t\t! Npoints"
+    filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
+    filetext += "\n" + str(Tbounds[1]) + "\t\t! Tmax [K]"
+    filetext += "\n" + str(pbounds[0]) + "\t! pmin [bar]"
+    filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
+
+    overwrite_to(filename, filetext)
+
+
+def run_ggchem_gridline():
+    """
+    Runs GGchem on the input file `grid_line_p.in`
+    """
+    os.system("cd ./GGchem && ./ggchem input/grid_line_p.in > /dev/null && cd ..")
+
+
+def run_ggchem_grid(
+    results_file, abund_file="abund_venus.in", pbounds=None, Tbounds=None, Npoints=100
+):
+    """
+    Repeatedly runs `run_ggchem_gridline()` to find the
+    abundances over the entire pT grid
+    Saves to `results_file`
+    """
+    if Tbounds is None:
+        Tbounds = [650, 2000]
+    if pbounds is None:
+        pbounds = [0.1, 1e4]
+    overwrite_to(results_file, "")  # Initialises if doesn't exist
+
+    pressures = np.logspace(np.log10(pbounds[0]), np.log10(pbounds[1]), Npoints)
+
+    for p in tqdm(pressures, total=len(pressures)):
+        create_GGchem_file_pT(
+            p, Tbounds=Tbounds, Npoints=Npoints, abund_file=abund_file
         )
-    return filetext[:-1]
+
+        run_ggchem_gridline()  # Runs GGchem at pressure p and T between Tbounds
+
+        write_to(results_file, read_from("./GGchem/Static_Conc.dat"))
 
 
-def create_GGchem_input_file(abund_file, p):
-    """
-    Creates GGchem input file for a given composition and pressure.
-    `abund_file` should be given relative to GGchem folder
-    """
-    abund_file_element_list = " ".join(
-        [
-            line.split()[0]
-            for line in read_from(f"./GGchem/{abund_file}").split("\n")[:-1]
-        ]
-    )
-    p_string = f"{p:.5e}\t! pmin [bar]\n{p:.5e}\t! pmax [bar]\n"
-    model_template_pieces = read_from("./grid/model_Venus_template.in").split("?")
-    GGchem_input_filetext = (
-        model_template_pieces[0]
-        + abund_file_element_list
-        + model_template_pieces[1]
-        + abund_file
-        + model_template_pieces[2]
-        + p_string
-    )
-    return GGchem_input_filetext
-
-
-def create_GGchem_pT_profile_filetext(pressures, temperatures):
-    """
-    Creates text for a pT profile file that can be used as input for GGchem.
-    """
-    filetext = "# P [bar], T [K]"
-    pressures, temperatures = sort_pT_profile(pressures, temperatures)
-    for p, T in zip(pressures, temperatures):
-        filetext += f"\n{p:.5e} {T:.5e}"
-    return filetext
+# Managing resulting .dat files
 
 
 def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
@@ -242,98 +188,6 @@ def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
     return df_processed
 
 
-def run_GGchem(
-    pressures, temperatures, gas_species_names, base_gas_species_mrs, eq_cond
-):
-    """
-    Runs GGchem on the inputted pressure-temperature profile
-    Condensation can be turned on or off
-    """
-    eq_cond_text = f"?\n.{str(eq_cond).lower()}.\t\t! model_eqcond"
-    input_file = "./GGchem/input/model_inhomog.in"
-    # Setting condensation on/off
-    overwrite_to(input_file, read_from(input_file).split("?")[0] + eq_cond_text)
-    # Setting elemental abundances
-    overwrite_to(
-        "./GGchem/abund_inhomog.in",
-        create_GGchem_abundance_filetext(
-            elemental_abund_from_gases(gas_species_names, base_gas_species_mrs)
-        ),
-    )
-    # Setting pT profile
-    overwrite_to(
-        "./GGchem/structures/adiabat_isotherm.dat",
-        create_GGchem_pT_profile_filetext(pressures, temperatures),
-    )
-    # Running GGchem
-    os.system("bash ./run_ggchem.sh model_inhomog.in >/dev/null")
-    return gather_GGchem_results()
-
-
-## -------------------
-## Newer GGchem tools which work better - use these!
-
-
-def create_GGchem_file_pT(pbounds=None, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
-    """
-    Creates the GGchem input file for a particular p,
-    for a given temperature range, precision, and
-    set of elemental abundances
-    """
-    if Tbounds is None:
-        Tbounds = [650, 2000]
-    if pbounds is None:
-        pbounds = [.1, 1e4]
-
-    template_text = read_from("./GGchem/input/model_Venus_template.in")
-    template_lines = template_text.split("\n")
-    filetext = ""
-    filetext += "\n".join(template_lines[:11])
-    filetext += "\n" + abund_file
-    filetext += "\n".join(template_lines[12:28])
-    filetext += "\n" + str(Npoints) + "\t\t! Npoints"
-    filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
-    filetext += "\n" + str(Tbounds[1]) + "\t\t! Tmax [K]"
-    filetext += "\n" + str(pbounds[0]) + "\t! pmin [bar]"
-    filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
-
-    overwrite_to("./GGchem/input/grid_line_p.in", filetext)
-
-
-def run_ggchem_gridline():
-    """
-    Runs GGchem on the input file `grid_line_p.in`
-    """
-    os.system("cd ./GGchem && ./ggchem input/grid_line_p.in > /dev/null && cd ..")
-
-
-def run_ggchem_grid(
-    results_file, abund_file="abund_venus.in", pbounds=None, Tbounds=None, Npoints=100
-):
-    """
-    Repeatedly runs `run_ggchem_gridline()` to find the
-    abundances over the entire pT grid
-    Saves to `results_file`
-    """
-    if Tbounds is None:
-        Tbounds = [650, 2000]
-    if pbounds is None:
-        pbounds = [0.1, 1e4]
-    overwrite_to(results_file, "")  # Initialises if doesn't exist
-
-    pressures = np.logspace(np.log10(pbounds[0]), np.log10(pbounds[1]), Npoints)
-
-    for p in tqdm(pressures, total=len(pressures)):
-        create_GGchem_file_pT(
-            p, Tbounds=Tbounds, Npoints=Npoints, abund_file=abund_file
-        )
-
-        run_ggchem_gridline()  # Runs GGchem at pressure p and T between Tbounds
-
-        write_to(results_file, read_from("./GGchem/Static_Conc.dat"))
-
-
-# Managing concatenated .dat files
 def create_ggchem_results_df(results_file):
     """
     Creates a pandas df from the concatenated results file
@@ -523,70 +377,6 @@ def calc_MMW(molecules_GGchem_names, VMRs):
 
     mmw = sum_VMRi_mui / sum_VMRi
     return mmw
-
-
-def mass_frac_dict(molecules_GGchem_names, molecules_mr):
-    """
-    Calculates the dictionary of mass fraction profiles for a given atmosphere
-    required by pRT.
-    Inputs:
-        `molecules_mr`: VMR profiles of the molecules to be used
-        `molecules_GGchem_names`: GGchem names of molecules
-    Outputs:
-        `mass_fractions`: a dictionary containing mass fraction profiles
-                            for each of the molecules needed
-    """
-    mmw_profile = calc_MMW(
-        molecules_GGchem_names,
-        molecules_mr,  # (N_mol, N_atm)
-    )
-    mass_fraction_profiles = {
-        mol.pRT_filename: molecules_mr[molecules_GGchem_names == mol.GGchem_name][0]
-        * mol.mmw
-        / mmw_profile
-        for mol in ALL_MOLECULES
-    }
-    return mass_fraction_profiles
-
-
-def isotherm_adiabat_stitcher(p0, T0, T_isotherm, gamma=1.2):
-    """
-    Creates a pressure-temperature profile, which is
-        an adiabat at high p (low z), and
-        isothermal at low p (high z)
-
-    Inputs:
-        T0: surface temperature
-        p0: surface pressure
-        T_isotherm: temperature of the isotherm. Should be < T0
-        gamma: heat capacity ratio
-            Default value of 1.2 is roughly that of CO2 at high T
-
-    Outputs:
-        pressures: pressures (logspace from p0 to 1e-8bar)
-        temperatures: temperature profile
-    """
-
-    pressures = np.logspace(-8, np.log10(p0), 100)
-    temperatures = T0 * (pressures / p0) ** ((gamma - 1) / gamma)
-    temperatures[temperatures < T_isotherm] = T_isotherm
-
-    return pressures, temperatures
-
-
-# p-T profiles
-def sort_pT_profile(pressures, temperatures, reverse=False):
-    """
-    Sorts pressure-temperature profile in descending order of pressure,
-        or ascending if reverse=True
-    """
-    order = np.argsort(pressures)
-    if reverse:
-        order = order[::-1]
-
-    pressures = np.array(pressures)[order]  # Sorting in descending pressure order
-    temperatures = np.array(temperatures)[order]
-    return pressures, temperatures
 
 
 ## -----------------------

@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from mymodules import myutils
+from . import myutils
 
 # Pressures at which GGchem will run
 pmin, pmax = 0.1, 1e4  # bar

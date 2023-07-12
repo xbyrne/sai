@@ -12,7 +12,7 @@ The compositional profile for each surface pressure is saved at the end
 import numpy as np
 from tqdm import tqdm
 from petitRADTRANS import Radtrans, nat_cst as nc
-from mymodules import myutils
+from . import myutils
 
 ## Loading grid abundances
 print("Loading grid abundances...")
