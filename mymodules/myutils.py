@@ -274,7 +274,7 @@ def run_GGchem(
 ## Newer GGchem tools which work better - use these!
 
 
-def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
+def create_GGchem_file_pT(pbounds=None, Tbounds=None, Npoints=100, abund_file="abund_venus.in"):
     """
     Creates the GGchem input file for a particular p,
     for a given temperature range, precision, and
@@ -282,6 +282,8 @@ def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.
     """
     if Tbounds is None:
         Tbounds = [650, 2000]
+    if pbounds is None:
+        pbounds = [.1, 1e4]
 
     template_text = read_from("./GGchem/input/model_Venus_template.in")
     template_lines = template_text.split("\n")
@@ -292,8 +294,8 @@ def create_GGchem_file_pT(p, Tbounds=None, Npoints=100, abund_file="abund_venus.
     filetext += "\n" + str(Npoints) + "\t\t! Npoints"
     filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
     filetext += "\n" + str(Tbounds[1]) + "\t\t! Tmax [K]"
-    filetext += "\n" + str(p) + "\t! pmin [bar]"
-    filetext += "\n" + str(p) + "\t! pmax [bar]" + "\n"
+    filetext += "\n" + str(pbounds[0]) + "\t! pmin [bar]"
+    filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
 
     overwrite_to("./GGchem/input/grid_line_p.in", filetext)
 
