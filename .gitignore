@@ -19,6 +19,9 @@ grid/grid_output.dat
 GGchem/.gitignore
 GGchem/abund_SharpHuebner.dat
 GGchem/abund_simple.in
+GGchem/abund_Ca*
+GGchem/abund_O*
+GGchem/abund_Venus_copy.in
 GGchem/data
 GGchem/database.dat
 GGchem/demo_eqchem.pdf
