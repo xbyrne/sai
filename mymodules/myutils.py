@@ -8,7 +8,11 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib import cm
 from chempy import Substance
+
+mpl.style.use("~/xbyrne.mplstyle")
 
 
 ## ------------------------------------
@@ -190,31 +194,6 @@ def create_GGchem_pT_profile_filetext(pressures, temperatures):
     return filetext
 
 
-def extract_GGchem_df(results_file="./GGchem/Static_Conc.dat"):
-    """
-    Returns a df of the useful columns in ./GGchem/Static_Conc.dat
-    Used when don't need to convert to .npz; else use
-    `gather_GGchem_results()` below.
-    """
-    GGchem_df = pd.read_csv(results_file, skiprows=2, delim_whitespace=True)
-    N_elements, N_molecules, N_condensates, _ = [
-        int(par) for par in read_from(results_file).split("\n")[1].split()
-    ]
-    column_selection = GGchem_df.columns[: 4 + N_elements + N_molecules].union(
-        GGchem_df.columns[
-            4
-            + N_elements
-            + N_molecules
-            + N_condensates : 4
-            + N_elements
-            + N_molecules
-            + 2 * N_condensates
-        ],
-        sort=False,
-    )
-    return GGchem_df[column_selection]
-
-
 def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
     """
     Extracts arrays of temperature, pressure, gas VMRs and names,
@@ -226,42 +205,41 @@ def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
     N_elements, N_molecules, N_condensates, _ = [
         int(par) for par in read_from(results_file).split("\n")[1].split()
     ]
-    p_bar = GGchem_df.pgas.to_numpy() / 1e6  # GGchem gives ubar fsr
-    T_K = GGchem_df.Tg.to_numpy()
-    new_gas_species_names = np.array(
-        GGchem_df.columns[4 : 4 + N_elements + N_molecules]
-    )  # ~(330,)
-    new_gas_species_cm3 = np.swapaxes(  # Putting species axis first
-        np.array(GGchem_df[new_gas_species_names]), 0, 1
-    )  # ~(330,len(GGchem_df))
-    new_gas_species_mr = 10**new_gas_species_cm3 / np.sum(
-        10**new_gas_species_cm3, axis=0
-    )
-    condensates_colnames = np.array(
-        GGchem_df.columns[
-            4
-            + N_elements
-            + N_molecules
-            + N_condensates : 4
-            + N_elements
-            + N_molecules
-            + N_condensates * 2
-        ]
-    )
-    condensates_cm3 = (
-        GGchem_df.nHges.to_numpy() * 10 ** GGchem_df[condensates_colnames].to_numpy().T
-    )  # Converting to cm^-3
-    condensates_mf = condensates_cm3 / np.sum(condensates_cm3, axis=0)
+    column_mask = np.full_like(GGchem_df.columns, False)
+    column_mask[0] = True
+    column_mask[2] = True
+    column_mask[4 : 4 + N_elements + N_molecules] = True
+    column_mask[
+        4
+        + N_elements
+        + N_molecules
+        + N_condensates : 4
+        + N_elements
+        + N_molecules
+        + 2 * N_condensates
+    ] = True
 
-    condensates_names = np.array([nm[1:] for nm in condensates_colnames])
-    return (
-        p_bar,
-        T_K,
-        new_gas_species_names,
-        new_gas_species_mr,
-        condensates_names,
-        condensates_mf,
-    )
+    df_masked = GGchem_df.iloc[:, column_mask]
+    # Removing masked minerals
+    df_masked = df_masked.loc[:, (df_masked != -300.0).any()]
+    # Converting to VMRs and MFs
+    gas_data = df_masked.iloc[:, 2 : 2 + N_elements + N_molecules]
+    cond_data = df_masked.iloc[
+        :, 2 + N_elements + N_molecules : 2 + N_elements + N_molecules + N_condensates
+    ]
+    gas_df = (10**gas_data).div((10**gas_data).sum(axis=1), axis=0)
+    cond_df = (10**cond_data).div((10**cond_data).sum(axis=1), axis=0)
+
+    df_processed = df_masked.copy()
+    df_processed.loc[gas_df.index, gas_df.columns] = gas_df
+    df_processed.loc[cond_df.index, cond_df.columns] = cond_df
+    # Flooring <1e-300s
+    df_processed[df_processed < 1e-300] = 0
+    # Non-crucial relabelling/conversions of temperature/pressure columns
+    df_processed.pgas = df_processed.pgas.div(1e6)  # Converting to bar
+    df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
+
+    return df_processed
 
 
 def run_GGchem(
@@ -610,7 +588,7 @@ def sort_pT_profile(pressures, temperatures, reverse=False):
 
 
 ## -----------------------
-## Consistent plotting tool
+## Consistent plotting tools
 def plot_spectra(wavelengths_um, spectra, cols, labels=None):
     """
     Plots a set of spectra in my standard format,
@@ -631,4 +609,35 @@ def plot_spectra(wavelengths_um, spectra, cols, labels=None):
     ax.set_xticklabels(xtix)
     ax.set_xlabel(r"$\lambda/\mu$m")
     ax.set_ylabel(r"Transit Radius / $R_J$")
+    return fg
+
+
+def plot_grid(df, gas=None, cond=None, **kwargs):
+    """
+    Plots abundance grids. Don't know why I didn't define a function for this earlier
+    """
+    grid_size = int(np.sqrt(len(df)))
+
+    def squarsh(df, key):
+        return df[key].to_numpy().reshape(grid_size, grid_size)
+
+    if gas:
+        field = gas
+        cmp = cm.Greens
+    elif cond:
+        field = f"n{cond}"
+        cmp = cm.Oranges
+
+    fg, ax = plt.subplots()
+    contf = ax.pcolormesh(
+        squarsh(df, "T_K"),
+        squarsh(df, "p_bar"),
+        squarsh(df, field),
+        vmin=0,
+        vmax=np.max(df[field]),
+        cmap=cmp,
+        **kwargs,
+    )
+    ax.set_yscale("log")
+    fg.colorbar(contf, ax=ax)
     return fg
