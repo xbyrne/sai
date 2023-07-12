@@ -73,11 +73,11 @@ def correct_GGchem_names(ggchem_names):
 
 
 def create_GGchem_file_pT(
-    filename="./GGchem/input/grid_line_p.in",
+    filename="grid_line_p.in",
     pbounds=None,
     Tbounds=None,
     Npoints=100,
-    abund_file="abund_venus.in",
+    abund_code="abund_venus",
 ):
     """
     Creates the GGchem input file for a particular p,
@@ -93,7 +93,7 @@ def create_GGchem_file_pT(
     template_lines = template_text.split("\n")
     filetext = ""
     filetext += "\n".join(template_lines[:11])
-    filetext += "\n" + abund_file
+    filetext += "\n" + f'{abund_code}.in'
     filetext += "\n".join(template_lines[12:28])
     filetext += "\n" + str(Npoints) + "\t\t! Npoints"
     filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
@@ -101,7 +101,7 @@ def create_GGchem_file_pT(
     filetext += "\n" + str(pbounds[0]) + "\t! pmin [bar]"
     filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
 
-    overwrite_to(filename, filetext)
+    overwrite_to(f'./GGchem/input/{filename}', filetext)
 
 
 def run_ggchem_gridline():
@@ -112,7 +112,7 @@ def run_ggchem_gridline():
 
 
 def run_ggchem_grid(
-    results_file, abund_file="abund_venus.in", pbounds=None, Tbounds=None, Npoints=100
+    results_file, abund_code="abund_venus", pbounds=None, Tbounds=None, Npoints=100
 ):
     """
     Repeatedly runs `run_ggchem_gridline()` to find the
@@ -129,7 +129,7 @@ def run_ggchem_grid(
 
     for p in tqdm(pressures, total=len(pressures)):
         create_GGchem_file_pT(
-            p, Tbounds=Tbounds, Npoints=Npoints, abund_file=abund_file
+            p, Tbounds=Tbounds, Npoints=Npoints, abund_code=abund_code
         )
 
         run_ggchem_gridline()  # Runs GGchem at pressure p and T between Tbounds
