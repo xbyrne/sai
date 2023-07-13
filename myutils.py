@@ -7,6 +7,7 @@ import os
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+from chempy import Substance
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import cm
@@ -273,6 +274,22 @@ def df_to_abund(df, abund_code, **kwargs):
     Kwargs are passed to df.to_csv
     """
     df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
+
+def CaO_mass_fraction(df):
+    mineral_df = df[[header for header in df.columns
+                     if header[0]=='n']]
+    mineral_df.rename(
+        columns=lambda header: correct_GGchem_names(header[1:])
+    )
+    CaO_mmw = Substance.from_formula('CaO').mass
+    CaO_mass = np.zeros_like(mineral_df.index)
+    total_mass = np.zeros_like(mineral_df.index)
+    for mineral_formula in mineral_df.columns:
+        species = Substance.from_formula(mineral_formula)
+        if 20 in species.composition:
+            CaO_mass += species.composition[20] * 1* CaO_mmw
+        total_mass += mineral_df[mineral_formula] * species.mass
+    return CaO_mass/total_mass
 
 
 ## ------------------------------------
