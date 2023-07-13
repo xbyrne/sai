@@ -11,6 +11,7 @@ from chempy import Substance
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import cm
+
 mpl.style.use("~/xbyrne.mplstyle")
 
 
@@ -94,7 +95,7 @@ def create_GGchem_file_pT(
     template_lines = template_text.split("\n")
     filetext = ""
     filetext += "\n".join(template_lines[:11])
-    filetext += "\n" + f'{abund_code}.in'
+    filetext += "\n" + f"{abund_code}.in"
     filetext += "\n".join(template_lines[12:28])
     filetext += "\n" + str(Npoints) + "\t\t! Npoints"
     filetext += "\n" + str(Tbounds[0]) + "\t\t! Tmin [K]"
@@ -102,7 +103,7 @@ def create_GGchem_file_pT(
     filetext += "\n" + str(pbounds[0]) + "\t! pmin [bar]"
     filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
 
-    overwrite_to(f'./GGchem/input/{filename}', filetext)
+    overwrite_to(f"./GGchem/input/{filename}", filetext)
 
 
 def run_ggchem_gridline():
@@ -275,21 +276,24 @@ def df_to_abund(df, abund_code, **kwargs):
     """
     df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
 
+
 def CaO_mass_fraction(df):
-    mineral_df = df[[header for header in df.columns
-                     if header[0]=='n']]
-    mineral_df.rename(
-        columns=lambda header: correct_GGchem_names(header[1:])
-    )
-    CaO_mmw = Substance.from_formula('CaO').mass
-    CaO_mass = np.zeros_like(mineral_df.index)
-    total_mass = np.zeros_like(mineral_df.index)
+    """
+    Produces a CaO solid mass fraction columns for data in a given df
+    """
+    mineral_df = df[[header for header in df.columns if header[0] == "n"]]
+    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
+    CaO_mmw = Substance.from_formula("CaO").mass
+    CaO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
     for mineral_formula in mineral_df.columns:
         species = Substance.from_formula(mineral_formula)
         if 20 in species.composition:
-            CaO_mass += species.composition[20] * 1* CaO_mmw
+            CaO_mass += (
+                mineral_df[mineral_formula] * species.composition[20] * 1 * CaO_mmw
+            )
         total_mass += mineral_df[mineral_formula] * species.mass
-    return CaO_mass/total_mass
+    return CaO_mass / total_mass
 
 
 ## ------------------------------------
