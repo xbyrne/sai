@@ -18,7 +18,7 @@ def alter_Ca():
         abund_df = myutils.df_from_abund("abund_Venus")
         abund_df.at["Ca", "epsilon"] = Ca_abund
         myutils.df_to_abund(abund_df, abund_code)
-        myutils.create_GGchem_file_pT(
+        myutils.create_GGchem_input_file(
             filename="grid_line_1400.in", Tbounds=[1400, 1400], abund_code=abund_code
         )
         os.system(
@@ -40,7 +40,7 @@ def alter_O():
         abund_df = myutils.df_from_abund("abund_Venus")
         abund_df.at["O", "epsilon"] = O_abund
         myutils.df_to_abund(abund_df, abund_code)
-        myutils.create_GGchem_file_pT(
+        myutils.create_GGchem_input_file(
             filename="grid_line_1400.in", Tbounds=[1400, 1400], abund_code=abund_code
         )
         os.system(
@@ -96,7 +96,7 @@ def alter_Ca_O():
         abund_df.at["Ca", "epsilon"] += deps_Ca
         abund_df.at["O", "epsilon"] += deps_O
         myutils.df_to_abund(abund_df, "abund_Venus_CaO")
-        myutils.create_GGchem_file_pT(
+        myutils.create_GGchem_input_file(
             filename="grid_line_1400.in",
             Tbounds=[1400, 1400],
             abund_code="abund_Venus_CaO",
