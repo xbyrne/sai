@@ -99,7 +99,7 @@ def df_to_abund(df, abund_code, **kwargs):
     df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
 
 
-def create_GGchem_file_pT(
+def create_GGchem_input_file(
     filename="grid_line_p.in",
     pbounds=None,
     Tbounds=None,
@@ -222,7 +222,7 @@ def run_ggchem_grid(
     pressures = np.logspace(np.log10(pbounds[0]), np.log10(pbounds[1]), Npoints)
 
     for p in tqdm(pressures, total=len(pressures)):
-        create_GGchem_file_pT(
+        create_GGchem_input_file(
             p, Tbounds=Tbounds, Npoints=Npoints, abund_code=abund_code
         )
 
