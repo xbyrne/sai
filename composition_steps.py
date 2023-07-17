@@ -33,8 +33,8 @@ def alter_O():
     """
     Alters O composition, generates lines at 1400K
     """
-    for O_abund in np.linspace(19.559, 19.57, 12):
-        abund_number = round((O_abund - 19) * 1000)  # From 559 to 570
+    for O_abund in np.linspace(19.559, 19.560, 11):
+        abund_number = round((O_abund - 19) * 10000)  # From 5590 to 5600
         abund_code = f"abund_O{abund_number}"
         print(f"Currently running for number {abund_number}")
         abund_df = myutils.df_from_abund("abund_Venus")

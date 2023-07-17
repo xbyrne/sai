@@ -190,6 +190,18 @@ def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
     return df_processed
 
 
+def get_params(results_file):
+    """
+    Extracts number of gas and mineral species
+    Returns `N_gases` and `N_conds`
+    """
+    filetext = read_from(results_file)
+    params = [int(param) for param in filetext.split('\n')[1].split()]
+    N_gases = params[0]+params[1]
+    N_conds = params[2]
+    return N_gases, N_conds
+
+
 def create_ggchem_results_df(results_file):
     """
     Creates a pandas df from the concatenated results file
@@ -424,15 +436,14 @@ def plot_spectra(wavelengths_um, spectra, cols, labels=None):
     ax.set_ylabel(r"Transit Radius / $R_J$")
     return fg
 
+def squarsh(df, key, grid_size=100):
+    return df[key].to_numpy().reshape(grid_size, grid_size)
 
 def plot_grid(df, gas=None, cond=None, **kwargs):
     """
     Plots abundance grids. Don't know why I didn't define a function for this earlier
     """
     grid_size = int(np.sqrt(len(df)))
-
-    def squarsh(df, key):
-        return df[key].to_numpy().reshape(grid_size, grid_size)
 
     if gas:
         field = gas
