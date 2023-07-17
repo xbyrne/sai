@@ -74,6 +74,31 @@ def correct_GGchem_names(ggchem_names):
         return correct_names
 
 
+# Utils for managing elemental abundance files
+
+
+def df_from_abund(abund_code, **kwargs):
+    """
+    Gets a df of all the elemental abundances in `./GGchem/{abund_code}.in`
+    Kwargs are passed to pd.read_csv
+    """
+    return pd.read_csv(
+        io.StringIO(read_from(f"./GGchem/{abund_code}.in")),
+        delim_whitespace=True,
+        names=["Element", "epsilon"],
+        index_col=0,
+        **kwargs,
+    )
+
+
+def df_to_abund(df, abund_code, **kwargs):
+    """
+    Writes a df of elemental abundances to `./GGchem/{abund_code}.in`
+    Kwargs are passed to df.to_csv
+    """
+    df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
+
+
 def create_GGchem_file_pT(
     filename="grid_line_p.in",
     pbounds=None,
@@ -104,6 +129,73 @@ def create_GGchem_file_pT(
     filetext += "\n" + str(pbounds[1]) + "\t! pmax [bar]" + "\n"
 
     overwrite_to(f"./GGchem/input/{filename}", filetext)
+
+
+# Managing resulting .dat files
+
+
+def get_params(results_file):
+    """
+    Extracts number of gas and mineral species
+    Returns `N_gases` and `N_conds`
+    """
+    filetext = read_from(results_file)
+    params = [int(param) for param in filetext.split("\n")[1].split()]
+    N_gases = params[0] + params[1]
+    N_conds = params[2]
+    return N_gases, N_conds
+
+
+def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
+    """
+    Gathers number densities of gas and condensate species from GGchem's output file.
+    In each case, number densities are given as log10(n / cm-3)
+    Removes supersaturation ratios, epsilons, and other various
+    """
+    GGchem_df = pd.read_csv(results_file, skiprows=2, delim_whitespace=True)
+    N_gases, N_conds = get_params(results_file)
+    column_mask = np.full_like(GGchem_df.columns, False)
+    column_mask[0:3] = True
+    column_mask[4 : 4 + N_gases] = True
+    column_mask[4 + N_gases + N_conds : 4 + N_gases + 2 * N_conds] = True
+
+    df_masked = GGchem_df.iloc[:, column_mask]
+    # Removing absent minerals
+    df_masked = df_masked.loc[:, (df_masked != -300.0).any()]
+    # Converting condensate stats to log(n/cm-3)
+    df_masked.iloc[:, 3 + N_gases :] = df_masked.iloc[:, 3 + N_gases :].add(
+        np.log10(df_masked.nHges), axis=0
+    )
+    # Fixing chemical names, relabelling columns, putting p in bars bc it's annoying
+    df_masked.rename(columns=correct_GGchem_names, inplace=True)
+    df_masked.pgas = df_masked.pgas.div(1e6)
+    df_masked.rename(
+        columns={"Tg": "T_K", "pgas": "p_bar", "nHges": "nHtot"}, inplace=True
+    )
+
+    return df_masked
+
+
+def CaO_mass_fraction(df):
+    """
+    Produces a ``CaO solid mass fraction`` column for data in a given df
+    """
+    mineral_df = df[[header for header in df.columns if header[0] == "n"]]
+    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
+    CaO_mmw = Substance.from_formula("CaO").mass
+    CaO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    for mineral_formula in mineral_df.columns:
+        species = Substance.from_formula(mineral_formula)
+        if 20 in species.composition:
+            CaO_mass += (
+                mineral_df[mineral_formula] * species.composition[20] * 1 * CaO_mmw
+            )
+        total_mass += mineral_df[mineral_formula] * species.mass
+    return CaO_mass / total_mass
+
+
+## Utils for running a very specific grid thing I needed
 
 
 def run_ggchem_gridline():
@@ -137,69 +229,6 @@ def run_ggchem_grid(
         run_ggchem_gridline()  # Runs GGchem at pressure p and T between Tbounds
 
         write_to(results_file, read_from("./GGchem/Static_Conc.dat"))
-
-
-# Managing resulting .dat files
-
-
-def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
-    """
-    Extracts arrays of temperature, pressure, gas VMRs and names,
-     from GGchem's output file.
-    Also calculates condensate number densities and names,
-     if it detects that condensation was switched on.
-    """
-    GGchem_df = pd.read_csv(results_file, skiprows=2, delim_whitespace=True)
-    N_elements, N_molecules, N_condensates, _ = [
-        int(par) for par in read_from(results_file).split("\n")[1].split()
-    ]
-    column_mask = np.full_like(GGchem_df.columns, False)
-    column_mask[0] = True
-    column_mask[2] = True
-    column_mask[4 : 4 + N_elements + N_molecules] = True
-    column_mask[
-        4
-        + N_elements
-        + N_molecules
-        + N_condensates : 4
-        + N_elements
-        + N_molecules
-        + 2 * N_condensates
-    ] = True
-
-    df_masked = GGchem_df.iloc[:, column_mask]
-    # Removing masked minerals
-    df_masked = df_masked.loc[:, (df_masked != -300.0).any()]
-    # Converting to VMRs and MFs
-    gas_data = df_masked.iloc[:, 2 : 2 + N_elements + N_molecules]
-    cond_data = df_masked.iloc[
-        :, 2 + N_elements + N_molecules : 2 + N_elements + N_molecules + N_condensates
-    ]
-    gas_df = (10**gas_data).div((10**gas_data).sum(axis=1), axis=0)
-    cond_df = (10**cond_data).div((10**cond_data).sum(axis=1), axis=0)
-
-    df_processed = df_masked.copy()
-    df_processed.loc[gas_df.index, gas_df.columns] = gas_df
-    df_processed.loc[cond_df.index, cond_df.columns] = cond_df
-    # Flooring <1e-300s
-    df_processed[df_processed < 1e-300] = 0
-    # Non-crucial relabelling/conversions of temperature/pressure columns
-    df_processed.pgas = df_processed.pgas.div(1e6)  # Converting to bar
-    df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
-
-    return df_processed
-
-
-def get_params(results_file):
-    """
-    Extracts number of gas and mineral species
-    Returns `N_gases` and `N_conds`
-    """
-    filetext = read_from(results_file)
-    params = [int(param) for param in filetext.split("\n")[1].split()]
-    N_gases = params[0] + params[1]
-    N_conds = params[2]
-    return N_gases, N_conds
 
 
 def create_ggchem_results_df(results_file):
@@ -267,47 +296,6 @@ def create_ggchem_results_df(results_file):
     return df_processed
 
 
-def df_from_abund(abund_code, **kwargs):
-    """
-    Gets a df of all the elemental abundances in `./GGchem/{abund_code}.in`
-    Kwargs are passed to pd.read_csv
-    """
-    return pd.read_csv(
-        io.StringIO(read_from(f"./GGchem/{abund_code}.in")),
-        delim_whitespace=True,
-        names=["Element", "epsilon"],
-        index_col=0,
-        **kwargs,
-    )
-
-
-def df_to_abund(df, abund_code, **kwargs):
-    """
-    Writes a df of elemental abundances to `./GGchem/{abund_code}.in`
-    Kwargs are passed to df.to_csv
-    """
-    df.to_csv(f"./GGchem/{abund_code}.in", sep=" ", header=False, **kwargs)
-
-
-def CaO_mass_fraction(df):
-    """
-    Produces a CaO solid mass fraction columns for data in a given df
-    """
-    mineral_df = df[[header for header in df.columns if header[0] == "n"]]
-    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
-    CaO_mmw = Substance.from_formula("CaO").mass
-    CaO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
-    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
-    for mineral_formula in mineral_df.columns:
-        species = Substance.from_formula(mineral_formula)
-        if 20 in species.composition:
-            CaO_mass += (
-                mineral_df[mineral_formula] * species.composition[20] * 1 * CaO_mmw
-            )
-        total_mass += mineral_df[mineral_formula] * species.mass
-    return CaO_mass / total_mass
-
-
 ## -----------------------
 ## Consistent plotting tools
 def plot_spectra(wavelengths_um, spectra, cols, labels=None):
@@ -370,12 +358,12 @@ def plot_grid(df, gas=None, cond=None, **kwargs):
 
 ## ------------------------------------
 ## Chemical tools
-def mr(species):
+def mr(species_name):
     """
     Returns the molecular weight of a single species using chempy
     Given in g/mol
     """
-    return Substance(species).mass
+    return Substance.from_formula(species_name).mass
 
 
 ## ------------------------------------
