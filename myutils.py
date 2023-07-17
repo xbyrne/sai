@@ -196,8 +196,8 @@ def get_params(results_file):
     Returns `N_gases` and `N_conds`
     """
     filetext = read_from(results_file)
-    params = [int(param) for param in filetext.split('\n')[1].split()]
-    N_gases = params[0]+params[1]
+    params = [int(param) for param in filetext.split("\n")[1].split()]
+    N_gases = params[0] + params[1]
     N_conds = params[2]
     return N_gases, N_conds
 
@@ -308,6 +308,76 @@ def CaO_mass_fraction(df):
     return CaO_mass / total_mass
 
 
+## -----------------------
+## Consistent plotting tools
+def plot_spectra(wavelengths_um, spectra, cols, labels=None):
+    """
+    Plots a set of spectra in my standard format,
+    with inputted colours (and optionally labels)
+    """
+    fg, ax = plt.subplots(figsize=(15, 5))
+    if labels:
+        for spectrum, col, label in zip(spectra, cols, labels):
+            ax.plot(wavelengths_um, spectrum, c=col, label=label)
+        ax.legend()
+    else:
+        for spectrum, col in zip(spectra, cols):
+            ax.plot(wavelengths_um, spectrum, c=col)
+    ax.set_xlim([0.3, 15])
+    ax.set_xscale("log")
+    xtix = [0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14]
+    ax.set_xticks(xtix)
+    ax.set_xticklabels(xtix)
+    ax.set_xlabel(r"$\lambda/\mu$m")
+    ax.set_ylabel(r"Transit Radius / $R_J$")
+    return fg
+
+
+def squarsh(df, key, grid_size=100):
+    """
+    Squashes a df into a square and returns a np array
+    """
+    return df[key].to_numpy().reshape(grid_size, grid_size)
+
+
+def plot_grid(df, gas=None, cond=None, **kwargs):
+    """
+    Plots abundance grids. Don't know why I didn't define a function for this earlier
+    """
+    grid_size = int(np.sqrt(len(df)))
+
+    if gas:
+        field = gas
+        cmp = cm.Greens
+    elif cond:
+        field = f"n{cond}"
+        cmp = cm.Oranges
+
+    fg, ax = plt.subplots()
+    contf = ax.pcolormesh(
+        squarsh(df, "T_K", grid_size=grid_size),
+        squarsh(df, "p_bar", grid_size=grid_size),
+        squarsh(df, field, grid_size=grid_size),
+        vmin=0,
+        vmax=np.max(df[field]),
+        cmap=cmp,
+        **kwargs,
+    )
+    ax.set_yscale("log")
+    fg.colorbar(contf, ax=ax)
+    return fg
+
+
+## ------------------------------------
+## Chemical tools
+def mr(species):
+    """
+    Returns the molecular weight of a single species using chempy
+    Given in g/mol
+    """
+    return Substance(species).mass
+
+
 ## ------------------------------------
 ## petitRADTRANS tools
 
@@ -410,58 +480,3 @@ def calc_MMW(molecules_GGchem_names, VMRs):
 
     mmw = sum_VMRi_mui / sum_VMRi
     return mmw
-
-
-## -----------------------
-## Consistent plotting tools
-def plot_spectra(wavelengths_um, spectra, cols, labels=None):
-    """
-    Plots a set of spectra in my standard format,
-    with inputted colours (and optionally labels)
-    """
-    fg, ax = plt.subplots(figsize=(15, 5))
-    if labels:
-        for spectrum, col, label in zip(spectra, cols, labels):
-            ax.plot(wavelengths_um, spectrum, c=col, label=label)
-        ax.legend()
-    else:
-        for spectrum, col in zip(spectra, cols):
-            ax.plot(wavelengths_um, spectrum, c=col)
-    ax.set_xlim([0.3, 15])
-    ax.set_xscale("log")
-    xtix = [0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14]
-    ax.set_xticks(xtix)
-    ax.set_xticklabels(xtix)
-    ax.set_xlabel(r"$\lambda/\mu$m")
-    ax.set_ylabel(r"Transit Radius / $R_J$")
-    return fg
-
-def squarsh(df, key, grid_size=100):
-    return df[key].to_numpy().reshape(grid_size, grid_size)
-
-def plot_grid(df, gas=None, cond=None, **kwargs):
-    """
-    Plots abundance grids. Don't know why I didn't define a function for this earlier
-    """
-    grid_size = int(np.sqrt(len(df)))
-
-    if gas:
-        field = gas
-        cmp = cm.Greens
-    elif cond:
-        field = f"n{cond}"
-        cmp = cm.Oranges
-
-    fg, ax = plt.subplots()
-    contf = ax.pcolormesh(
-        squarsh(df, "T_K"),
-        squarsh(df, "p_bar"),
-        squarsh(df, field),
-        vmin=0,
-        vmax=np.max(df[field]),
-        cmap=cmp,
-        **kwargs,
-    )
-    ax.set_yscale("log")
-    fg.colorbar(contf, ax=ax)
-    return fg
