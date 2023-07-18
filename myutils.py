@@ -182,7 +182,8 @@ def CaO_mass_fraction(df):
     Assumes mineral abundances are stored logarithmically
     and all the mineral columns start with `n`, as GGchem gives them.
     """
-    mineral_df = df[[header for header in df.columns if header[0] == "n"]]
+    mineral_df = df[[header for header in df.columns
+                     if header[0] == "n" and header!='nHtot']]
     mineral_df = mineral_df.rename(columns=lambda header: header[1:])
     CaO_mmw = Substance.from_formula("CaO").mass
     CaO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
