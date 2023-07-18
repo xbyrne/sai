@@ -179,6 +179,8 @@ def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
 def CaO_mass_fraction(df):
     """
     Produces a ``CaO solid mass fraction`` column for data in a given df
+    Assumes mineral abundances are stored logarithmically
+    and all the mineral columns start with `n`, as GGchem gives them.
     """
     mineral_df = df[[header for header in df.columns if header[0] == "n"]]
     mineral_df = mineral_df.rename(columns=lambda header: header[1:])
@@ -189,9 +191,12 @@ def CaO_mass_fraction(df):
         species = Substance.from_formula(mineral_formula)
         if 20 in species.composition:
             CaO_mass += (
-                mineral_df[mineral_formula] * species.composition[20] * 1 * CaO_mmw
+                10 ** mineral_df[mineral_formula]
+                * species.composition[20]
+                * 1
+                * CaO_mmw
             )
-        total_mass += mineral_df[mineral_formula] * species.mass
+        total_mass += 10 ** mineral_df[mineral_formula] * species.mass
     return CaO_mass / total_mass
 
 
