@@ -182,8 +182,9 @@ def CaO_mass_fraction(df):
     Assumes mineral abundances are stored logarithmically
     and all the mineral columns start with `n`, as GGchem gives them.
     """
-    mineral_df = df[[header for header in df.columns
-                     if header[0] == "n" and header!='nHtot']]
+    mineral_df = df[
+        [header for header in df.columns if header[0] == "n" and header != "nHtot"]
+    ]
     mineral_df = mineral_df.rename(columns=lambda header: header[1:])
     CaO_mmw = Substance.from_formula("CaO").mass
     CaO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
@@ -370,6 +371,19 @@ def mr(species_name):
     Given in g/mol
     """
     return Substance.from_formula(species_name).mass
+
+
+def stoic(species_name, element_Ar):
+    """
+    Returns the number of the element with atomic number `element_Ar` in `species_name`
+    Crops leading `n`s from name, to allow for GGchem condensate namings
+    """
+    if species_name[0] == "n":
+        species_name = species_name[1:]
+    try:
+        return Substance.from_formula(species_name).composition[element_Ar]
+    except KeyError:
+        return 0
 
 
 ## ------------------------------------
