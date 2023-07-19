@@ -35,7 +35,9 @@ def alter_O():
     """
     for O_abund in np.linspace(
         # 19.559, 19.560, 11
-        19.559, 19.570, 12,
+        19.559,
+        19.570,
+        12,
     ):
         # abund_number = round((O_abund - 19) * 10000)  # From 5590 to 5600
         abund_number = round((O_abund - 19) * 1000)  # From 559 to 570
@@ -54,20 +56,23 @@ def alter_O():
         df.to_csv(f"/data/ajnb3/results/summer/O_lines/O{abund_number}.csv")
 
 
-# Altering Ca, O
-def depsilon_O(depsilon_Ca):
+# Altering metals with O
+def depsilon_O(depsilon_M, element):
     """
-    For a given alteration in Ca's conventional elemental abundance
+    For a given alteration in metal M's conventional elemental abundance
     parameter epsilon, gives the alteration in O's value of epsilon
-    such that the same amount of Ca and O atoms are added
+    such that the right amount of Ca and O atoms are added
     (relative to Venus)
+    Different numbers `n` of O atoms are added depending on the metal:
     """
+    coefficient_dict = {"Ca": 1, "Mg": 1, "Al": 3 / 2}
+    n = coefficient_dict[element]
     df_venus = myutils.df_from_abund("abund_Venus")
-    epsilon_Ca = df_venus.at["Ca", "epsilon"]  # ~18.24
+    epsilon_M = df_venus.at[element, "epsilon"]
     epsilon_O = df_venus.at["O", "epsilon"]  # ~19.56
 
     return (
-        np.log10(10 ** (epsilon_Ca + depsilon_Ca) + 10**epsilon_O - 10**epsilon_Ca)
+        np.log10(n * 10**epsilon_M * (10**depsilon_M - 1) + 10**epsilon_O)
         - epsilon_O
     )
 
@@ -95,7 +100,7 @@ def alter_Ca_O():
     depsilons_Ca = abs_deps_Cas + [-ep for ep in abs_deps_Cas]
     for deps_Ca in depsilons_Ca:
         print(deps_Ca)
-        deps_O = depsilon_O(deps_Ca)
+        deps_O = depsilon_O(deps_Ca, "Ca")
         abund_df = myutils.df_from_abund("abund_Venus")
         abund_df.at["Ca", "epsilon"] += deps_Ca
         abund_df.at["O", "epsilon"] += deps_O
