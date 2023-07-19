@@ -134,7 +134,7 @@ def create_GGchem_input_file(
 # Managing resulting .dat files
 
 
-def get_params(df):
+def get_params_from_df(df):
     """
     Extracts number of gas and mineral species from a df
     Returns `N_gases` and `N_conds`
@@ -144,6 +144,18 @@ def get_params(df):
     ]
     cond_cols = [col for col in df.columns if col[0]][1:]  # Excluding nHtot
     return len(gas_cols), len(cond_cols)
+
+
+def get_params(results_file="./GGchem/Static_Conc.dat"):
+    """
+    Extracts number of gas and mineral species from `Static_Conc.dat`
+    Returns `N_gases` and `N_conds`
+    """
+    filetext = read_from(results_file)
+    params = [int(param) for param in filetext.split("\n")[1].split()]
+    N_gases = params[0] + params[1]
+    N_conds = params[2]
+    return N_gases, N_conds
 
 
 def gather_GGchem_results(results_file="./GGchem/Static_Conc.dat"):
