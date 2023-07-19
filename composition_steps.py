@@ -115,3 +115,83 @@ def alter_Ca_O():
         )
         df = myutils.gather_GGchem_results()
         df.to_csv(f"/data/ajnb3/results/summer/Ca_O_lines/CaO{deps_Ca}.csv")
+
+
+def alter_Mg_O():
+    """
+    Alters Mg and O composition simultaneously, such that relative to Venus we have
+    just added MgO
+    """
+    abs_deps_Mgs = [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.06,
+        0.08,
+        0.1,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1.0,
+    ]
+    depsilons_Mg = abs_deps_Mgs + [-ep for ep in abs_deps_Mgs]
+    for deps_Mg in depsilons_Mg:
+        print(deps_Mg)
+        deps_O = depsilon_O(deps_Mg, "Mg")
+        abund_df = myutils.df_from_abund("abund_Venus")
+        abund_df.at["Mg", "epsilon"] += deps_Mg
+        abund_df.at["O", "epsilon"] += deps_O
+        myutils.df_to_abund(abund_df, "abund_Venus_MgO")
+        myutils.create_GGchem_input_file(
+            filename="grid_line_1400.in",
+            Tbounds=[1400, 1400],
+            abund_code="abund_Venus_MgO",
+        )
+        os.system(
+            "cd ./GGchem && ./ggchem input/grid_line_1400.in > /dev/null && cd .."
+        )
+        df = myutils.gather_GGchem_results()
+        df.to_csv(f"/data/ajnb3/results/summer/Mg_O_lines/MgO{deps_Mg}.csv")
+
+
+def alter_Al_O():
+    """
+    Alters Al and O composition simultaneously, such that relative to Venus we have
+    just added Al2O3
+    """
+    abs_deps_Als = [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.06,
+        0.08,
+        0.1,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1.0,
+    ]
+    depsilons_Al = abs_deps_Als + [-ep for ep in abs_deps_Als]
+    for deps_Al in depsilons_Al:
+        print(deps_Al)
+        deps_O = depsilon_O(deps_Al, "Al")
+        abund_df = myutils.df_from_abund("abund_Venus")
+        abund_df.at["Al", "epsilon"] += deps_Al
+        abund_df.at["O", "epsilon"] += deps_O
+        myutils.df_to_abund(abund_df, "abund_Venus_AlO")
+        myutils.create_GGchem_input_file(
+            filename="grid_line_1400.in",
+            Tbounds=[1400, 1400],
+            abund_code="abund_Venus_AlO",
+        )
+        os.system(
+            "cd ./GGchem && ./ggchem input/grid_line_1400.in > /dev/null && cd .."
+        )
+        df = myutils.gather_GGchem_results()
+        df.to_csv(f"/data/ajnb3/results/summer/Al_O_lines/AlO{deps_Al}.csv")
