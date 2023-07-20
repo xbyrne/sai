@@ -397,6 +397,8 @@ def stoic(species_name, element_Ar):
     except KeyError:
         return 0
 
+def unicodify(raw_formula_string):
+    return Substance.from_formula(raw_formula_string).unicode_name
 
 ## ------------------------------------
 ## petitRADTRANS tools
