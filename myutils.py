@@ -214,6 +214,32 @@ def CaO_mass_fraction(df):
     return CaO_mass / total_mass
 
 
+def MgO_mass_fraction(df):
+    """
+    Produces a ``MgO solid mass fraction`` column for data in a given df
+    Assumes mineral abundances are stored logarithmically
+    and all the mineral columns start with `n`, as GGchem gives them.
+    """
+    mineral_df = df[
+        [header for header in df.columns if header[0] == "n" and header != "nHtot"]
+    ]
+    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
+    MgO_mmw = Substance.from_formula("MgO").mass
+    MgO_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    for mineral_formula in mineral_df.columns:
+        species = Substance.from_formula(mineral_formula)
+        if 12 in species.composition:
+            MgO_mass += (
+                10 ** mineral_df[mineral_formula]
+                * species.composition[20]
+                * 1  # Stoichiometric coeff of Mg in MgO
+                * MgO_mmw
+            )
+        total_mass += 10 ** mineral_df[mineral_formula] * species.mass
+    return MgO_mass / total_mass
+
+
 ## Utils for running a very specific grid thing I needed
 
 
@@ -397,8 +423,11 @@ def stoic(species_name, element_Ar):
     except KeyError:
         return 0
 
+
 def unicodify(raw_formula_string):
+    """Converts chemical formula into unicode, allowing subscripts"""
     return Substance.from_formula(raw_formula_string).unicode_name
+
 
 ## ------------------------------------
 ## petitRADTRANS tools
