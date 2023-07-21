@@ -239,6 +239,7 @@ def MgO_mass_fraction(df):
         total_mass += 10 ** mineral_df[mineral_formula] * species.mass
     return MgO_mass / total_mass
 
+
 def Al2O3_massfraction(df):
     """
     Produces a ``Al2O3 solid mass fraction``` column for data in a given df
@@ -246,10 +247,10 @@ def Al2O3_massfraction(df):
     and all the mineral columns start with `n` as GGchem gives them
     """
     mineral_df = df[
-        [header for header in df.columns if header[0]=='n' and header != 'nHtot']
+        [header for header in df.columns if header[0] == "n" and header != "nHtot"]
     ]
     mineral_df = mineral_df.rename(columns=lambda header: header[1:])
-    Al2O3_mmw = Substance.from_formula('Al2O3').mass
+    Al2O3_mmw = Substance.from_formula("Al2O3").mass
     Al2O3_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
     total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
     for mineral_formula in mineral_df.columns:
@@ -258,11 +259,30 @@ def Al2O3_massfraction(df):
             Al2O3_mass += (
                 10 ** mineral_df[mineral_formula]
                 * species.composition[13]
-                * .5  # 1/Stoichiometric coeff of Al in Al2O3
+                * 0.5  # 1/Stoichiometric coeff of Al in Al2O3
                 * Al2O3_mmw
             )
         total_mass += 10 ** mineral_df[mineral_formula] * species.mass
     return Al2O3_mass / total_mass
+
+
+def fractionate(df, element):
+    """
+    Returns a df containing only the species with the specified element in it,
+    and with the fields being the fraction of the atoms of that element which are
+    in each of those species
+    """
+    atomic_number = list(Substance.from_formula(element).composition.keys())[0]
+    element_df = df[
+        [
+            col
+            for col in df.columns
+            if atomic_number in Substance.from_formula(col).composition
+        ]
+    ]
+    stoic_element = [stoic(col, atomic_number) for col in element_df.columns]
+    element_cm3_df = 10**element_df * stoic_element
+    return element_cm3_df.div(element_cm3_df.sum(axis=1), axis=0)
 
 
 ## ------------------------------------
