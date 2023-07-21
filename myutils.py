@@ -233,14 +233,67 @@ def MgO_mass_fraction(df):
             MgO_mass += (
                 10 ** mineral_df[mineral_formula]
                 * species.composition[12]
-                * 1  # Stoichiometric coeff of Mg in MgO
+                * 1  # 1/Stoichiometric coeff of Mg in MgO
                 * MgO_mmw
             )
         total_mass += 10 ** mineral_df[mineral_formula] * species.mass
     return MgO_mass / total_mass
 
+def Al2O3_massfraction(df):
+    """
+    Produces a ``Al2O3 solid mass fraction``` column for data in a given df
+    Assumes mineral abundances are stored logarithmically
+    and all the mineral columns start with `n` as GGchem gives them
+    """
+    mineral_df = df[
+        [header for header in df.columns if header[0]=='n' and header != 'nHtot']
+    ]
+    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
+    Al2O3_mmw = Substance.from_formula('Al2O3').mass
+    Al2O3_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    for mineral_formula in mineral_df.columns:
+        species = Substance.from_formula(mineral_formula)
+        if 13 in species.composition:
+            Al2O3_mass += (
+                10 ** mineral_df[mineral_formula]
+                * species.composition[13]
+                * .5  # 1/Stoichiometric coeff of Al in Al2O3
+                * Al2O3_mmw
+            )
+        total_mass += 10 ** mineral_df[mineral_formula] * species.mass
+    return Al2O3_mass / total_mass
 
-## Utils for running a very specific grid thing I needed
+
+## ------------------------------------
+## Chemical tools
+def mr(species_name):
+    """
+    Returns the molecular weight of a single species using chempy
+    Given in g/mol
+    """
+    return Substance.from_formula(species_name).mass
+
+
+def stoic(species_name, element_Ar):
+    """
+    Returns the number of the element with atomic number `element_Ar` in `species_name`
+    Crops leading `n`s from name, to allow for GGchem condensate namings
+    """
+    if species_name[0] == "n":
+        species_name = species_name[1:]
+    try:
+        return Substance.from_formula(species_name).composition[element_Ar]
+    except KeyError:
+        return 0
+
+
+def unicodify(raw_formula_string):
+    """Converts chemical formula into unicode, allowing subscripts"""
+    return Substance.from_formula(raw_formula_string).unicode_name
+
+
+## Utils for running a very specific grid thing I needed once
 
 
 def run_ggchem_gridline():
@@ -399,34 +452,6 @@ def plot_grid(df, gas=None, cond=None, **kwargs):
     ax.set_yscale("log")
     fg.colorbar(contf, ax=ax)
     return fg
-
-
-## ------------------------------------
-## Chemical tools
-def mr(species_name):
-    """
-    Returns the molecular weight of a single species using chempy
-    Given in g/mol
-    """
-    return Substance.from_formula(species_name).mass
-
-
-def stoic(species_name, element_Ar):
-    """
-    Returns the number of the element with atomic number `element_Ar` in `species_name`
-    Crops leading `n`s from name, to allow for GGchem condensate namings
-    """
-    if species_name[0] == "n":
-        species_name = species_name[1:]
-    try:
-        return Substance.from_formula(species_name).composition[element_Ar]
-    except KeyError:
-        return 0
-
-
-def unicodify(raw_formula_string):
-    """Converts chemical formula into unicode, allowing subscripts"""
-    return Substance.from_formula(raw_formula_string).unicode_name
 
 
 ## ------------------------------------
