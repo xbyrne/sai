@@ -232,7 +232,7 @@ def MgO_mass_fraction(df):
         if 12 in species.composition:
             MgO_mass += (
                 10 ** mineral_df[mineral_formula]
-                * species.composition[20]
+                * species.composition[12]
                 * 1  # Stoichiometric coeff of Mg in MgO
                 * MgO_mmw
             )
