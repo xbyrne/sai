@@ -240,7 +240,7 @@ def MgO_mass_fraction(df):
     return MgO_mass / total_mass
 
 
-def Al2O3_massfraction(df):
+def Al2O3_mass_fraction(df):
     """
     Produces a ``Al2O3 solid mass fraction``` column for data in a given df
     Assumes mineral abundances are stored logarithmically
@@ -266,6 +266,32 @@ def Al2O3_massfraction(df):
     return Al2O3_mass / total_mass
 
 
+def SiO2_mass_fraction(df):
+    """
+    Produces an ``SiO2 solid mass fraction``` column for data in a given df
+    Assumes mineral abundances are stored logarithmically
+    and all the mineral columns start with `n` as GGchem gives them
+    """
+    mineral_df = df[
+        [header for header in df.columns if header[0] == "n" and header != "nHtot"]
+    ]
+    mineral_df = mineral_df.rename(columns=lambda header: header[1:])
+    SiO2_mmw = Substance.from_formula("SiO2").mass
+    SiO2_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    total_mass = np.zeros_like(mineral_df.index, dtype=np.float64)
+    for mineral_formula in mineral_df.columns:
+        species = Substance.from_formula(mineral_formula)
+        if 14 in species.composition:
+            SiO2_mass += (
+                10 ** mineral_df[mineral_formula]
+                * species.composition[13]
+                * 1  # 1/Stoichiometric coeff of Si in SiO2
+                * SiO2_mmw
+            )
+        total_mass += 10 ** mineral_df[mineral_formula] * species.mass
+    return SiO2_mass / total_mass
+
+
 def fractionate(df, element):
     """
     Returns a df containing only the species with the specified element in it,
@@ -276,8 +302,9 @@ def fractionate(df, element):
     element_df = df[
         [
             col
-            for col in df.columns
-            if atomic_number in Substance.from_formula(col).composition
+            for col in df.columns[4:]
+            if atomic_number
+            in Substance.from_formula(col[1:] if col[0] == "n" else col).composition
         ]
     ]
     stoic_element = [stoic(col, atomic_number) for col in element_df.columns]
