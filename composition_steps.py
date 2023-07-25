@@ -62,10 +62,10 @@ def depsilon_O(depsilon_M, element):
     For a given alteration in metal M's conventional elemental abundance
     parameter epsilon, gives the alteration in O's value of epsilon
     such that the right amount of Ca and O atoms are added
-    (relative to Venus)
+    (relative to Venus), effectively adding MO_n
     Different numbers `n` of O atoms are added depending on the metal:
     """
-    coefficient_dict = {"Ca": 1, "Mg": 1, "Al": 3 / 2}
+    coefficient_dict = {"Ca": 1, "Mg": 1, "Al": 3 / 2, "Si": 2}
     n = coefficient_dict[element]
     df_venus = myutils.df_from_abund("abund_Venus")
     epsilon_M = df_venus.at[element, "epsilon"]
@@ -195,3 +195,43 @@ def alter_Al_O():
         )
         df = myutils.gather_GGchem_results()
         df.to_csv(f"/data/ajnb3/results/summer/Al_O_lines/AlO{deps_Al}.csv")
+
+
+def alter_Si_O():
+    """
+    Alters Si and O composition simultaneously, such that relative to Venus we have
+    just added SiO2
+    """
+    abs_deps_Sis = [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.06,
+        0.08,
+        0.1,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1.0,
+    ]
+    depsilons_Si = abs_deps_Sis + [-ep for ep in abs_deps_Sis]
+    for deps_Si in depsilons_Si:
+        print(deps_Si)
+        deps_O = depsilon_O(deps_Si, "Si")
+        abund_df = myutils.df_from_abund("abund_Venus")
+        abund_df.at["Si", "epsilon"] += deps_Si
+        abund_df.at["O", "epsilon"] += deps_O
+        myutils.df_to_abund(abund_df, "abund_Venus_SiO")
+        myutils.create_GGchem_input_file(
+            filename="grid_line_1400.in",
+            Tbounds=[1400, 1400],
+            abund_code="abund_Venus_SiO",
+        )
+        os.system(
+            "cd ./GGchem && ./ggchem input/grid_line_1400.in > /dev/null && cd .."
+        )
+        df = myutils.gather_GGchem_results()
+        df.to_csv(f"/data/ajnb3/results/summer/Si_O_lines/SiO{deps_Si}.csv")
