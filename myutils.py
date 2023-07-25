@@ -312,6 +312,15 @@ def fractionate(df, element):
     return element_cm3_df.div(element_cm3_df.sum(axis=1), axis=0)
 
 
+def VMR(df, gas_species):
+    """
+    Returns a series containing the VMRs of the given gas species
+    for each row in the df
+    """
+    gas_cm3 = 10 ** df[[col for col in df.columns if col[0] != "n"][3:]]
+    return gas_cm3[gas_species].div(gas_cm3.sum(axis=1), axis=0)
+
+
 ## ------------------------------------
 ## Chemical tools
 def mr(species_name):
