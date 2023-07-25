@@ -284,7 +284,7 @@ def SiO2_mass_fraction(df):
         if 14 in species.composition:
             SiO2_mass += (
                 10 ** mineral_df[mineral_formula]
-                * species.composition[13]
+                * species.composition[14]
                 * 1  # 1/Stoichiometric coeff of Si in SiO2
                 * SiO2_mmw
             )
