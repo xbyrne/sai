@@ -479,7 +479,8 @@ def squarsh(df, key, grid_size=100):
     """
     Squashes a df into a square and returns a np array
     """
-    return df[key].to_numpy().reshape(grid_size, grid_size)
+    df2 = df.copy()
+    return df2[key].to_numpy().reshape(grid_size, grid_size)
 
 
 def plot_grid(df, gas=None, cond=None, **kwargs):
