@@ -35,12 +35,14 @@ def alter_O():
     """
     for O_abund in np.linspace(
         # 19.559, 19.560, 11
-        19.559,
-        19.570,
-        12,
+        # 19.559, 19.570, 12,
+        19.55901,
+        19.55909,
+        9,
     ):
         # abund_number = round((O_abund - 19) * 10000)  # From 5590 to 5600
         abund_number = round((O_abund - 19) * 1000)  # From 559 to 570
+        abund_number = round((O_abund - 19) * 1e5)  # From 55901 to 55909
         abund_code = f"abund_O{abund_number}"
         print(f"Currently running for number {abund_number}")
         abund_df = myutils.df_from_abund("abund_Venus")
