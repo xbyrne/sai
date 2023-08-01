@@ -58,6 +58,48 @@ def alter_O():
         df.to_csv(f"/data/ajnb3/results/summer/O_lines/O{abund_number}.csv")
 
 
+# Altering S
+def alter_S():
+    """
+    Alters S composition, generates lines at 1400K
+    """
+    eps_Ss = [
+        17.0,
+        17.5,
+        17.6,
+        17.7,
+        17.8,
+        17.85,
+        17.86,
+        17.87,
+        17.88,
+        17.89,
+        17.9,
+        17.91,
+        17.92,
+        18.0,
+        18.1,
+        18.2,
+        18.3,
+        18.4,
+        18.8,
+    ]
+    for S_abund in eps_Ss:
+        abund_code = "abund_S"
+        print(f"Currently running for eps_S={S_abund}")
+        abund_df = myutils.df_from_abund("abund_Venus")
+        abund_df.at["S", "epsilon"] = S_abund
+        myutils.df_to_abund(abund_df, abund_code)
+        myutils.create_GGchem_input_file(
+            filename="grid_line_1400.in", Tbounds=[1400, 1400], abund_code=abund_code
+        )
+        os.system(
+            "cd ./GGchem && ./ggchem input/grid_line_1400.in > /dev/null && cd .."
+        )
+        df = myutils.gather_GGchem_results()
+        df.to_csv(f"/data/ajnb3/results/summer/S_lines/S{S_abund}.csv")
+
+
 # Altering metals with O
 def depsilon_O(depsilon_M, element):
     """
