@@ -349,6 +349,12 @@ def unicodify(raw_formula_string):
     return Substance.from_formula(raw_formula_string).unicode_name
 
 
+def chemlatex(raw_formula_string):
+    """Converts chemical formula into latex string; chempy does it slightly wrong"""
+    chempy_string = Substance.from_formula(raw_formula_string).latex_name
+    return chempy_string.replace("_", "$_").replace("}", "}$")
+
+
 ## Utils for running a very specific grid thing I needed once
 
 
