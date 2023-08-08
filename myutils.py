@@ -321,6 +321,17 @@ def VMR(df, gas_species):
     return gas_cm3[gas_species].div(gas_cm3.sum(axis=1), axis=0)
 
 
+def log_f(df, gas_species):
+    """
+    Returns a series containing the log(fugacity/bar) of the given 
+    gas species for each row in the df
+    """
+    vmr = VMR(df, gas_species)
+    fugacity = vmr * df.p_bar
+    return np.log10(fugacity)
+
+
+
 ## ------------------------------------
 ## Chemical tools
 def mr(species_name):
