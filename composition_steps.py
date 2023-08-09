@@ -33,23 +33,16 @@ def alter_O():
     """
     Alters O composition, generates lines at 1400K
     """
-    for O_abund in np.linspace(
-        # 19.559, 19.560, 11
-        # 19.559, 19.570, 12,
-        19.55901,
-        19.55909,
-        9,
-    ):
-        # abund_number = round((O_abund - 19) * 10000)  # From 5590 to 5600
-        abund_number = round((O_abund - 19) * 1000)  # From 559 to 570
-        abund_number = round((O_abund - 19) * 1e5)  # From 55901 to 55909
-        abund_code = f"abund_O{abund_number}"
+    for O_abund in [
+        19.559071, 19.5590695, 19.559069, 19.5590685
+    ]:
+        abund_number = int(str(O_abund)[3:])
         print(f"Currently running for number {abund_number}")
         abund_df = myutils.df_from_abund("abund_Venus")
         abund_df.at["O", "epsilon"] = O_abund
-        myutils.df_to_abund(abund_df, abund_code)
+        myutils.df_to_abund(abund_df, "abund_O")
         myutils.create_GGchem_input_file(
-            filename="grid_line_1400.in", Tbounds=[1400, 1400], abund_code=abund_code
+            filename="grid_line_1400.in", Tbounds=[1400, 1400], abund_code="abund_O"
         )
         os.system(
             "cd ./GGchem && ./ggchem input/grid_line_1400.in > /dev/null && cd .."
@@ -64,25 +57,7 @@ def alter_S():
     Alters S composition, generates lines at 1400K
     """
     eps_Ss = [
-        17.0,
-        17.5,
-        17.6,
-        17.7,
-        17.8,
-        17.85,
-        17.86,
-        17.87,
-        17.88,
-        17.89,
-        17.9,
-        17.91,
-        17.92,
-        18.0,
-        18.1,
-        18.2,
-        18.3,
-        18.4,
-        18.8,
+        17.881, 17.8823, 17.883, 17.8833, 17.8836
     ]
     for S_abund in eps_Ss:
         abund_code = "abund_S"
