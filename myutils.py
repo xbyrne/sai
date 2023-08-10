@@ -1,7 +1,6 @@
 """
 Basic utilities
 """
-from collections import namedtuple
 import io
 import os
 from tqdm import tqdm
@@ -10,7 +9,6 @@ import pandas as pd
 from chempy import Substance
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib import cm
 
 mpl.style.use("~/xbyrne.mplstyle")
 
@@ -323,13 +321,12 @@ def VMR(df, gas_species):
 
 def log_f(df, gas_species):
     """
-    Returns a series containing the log(fugacity/bar) of the given 
+    Returns a series containing the log(fugacity/bar) of the given
     gas species for each row in the df
     """
     vmr = VMR(df, gas_species)
     fugacity = vmr * df.p_bar
     return np.log10(fugacity)
-
 
 
 ## ------------------------------------
@@ -364,6 +361,92 @@ def chemlatex(raw_formula_string):
     """Converts chemical formula into latex string; chempy does it slightly wrong"""
     chempy_string = Substance.from_formula(raw_formula_string).latex_name
     return chempy_string.replace("_", "$_").replace("}", "}$")
+
+
+## -----------------------
+## Consistent plotting tools
+def plot_spectra(wavelengths_um, spectra, cols, labels=None):
+    """
+    Plots a set of spectra in my standard format,
+    with inputted colours (and optionally labels)
+    """
+    fg, ax = plt.subplots(figsize=(15, 5))
+    if labels:
+        for spectrum, col, label in zip(spectra, cols, labels):
+            ax.plot(wavelengths_um, spectrum, c=col, label=label)
+        ax.legend()
+    else:
+        for spectrum, col in zip(spectra, cols):
+            ax.plot(wavelengths_um, spectrum, c=col)
+    ax.set_xlim([0.3, 15])
+    ax.set_xscale("log")
+    xtix = [0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14]
+    ax.set_xticks(xtix)
+    ax.set_xticklabels(xtix)
+    ax.set_xlabel(r"$\lambda/\mu$m")
+    ax.set_ylabel(r"Transit Radius / $R_J$")
+    return fg
+
+
+def squarsh(df, key, grid_size=100):
+    """
+    Squashes a df into a square and returns a np array
+    """
+    df2 = df.copy()
+    return df2[key].to_numpy().reshape(grid_size, grid_size)
+
+
+## ------------------------------------
+## petitRADTRANS tools
+
+pRT_filename_dict = {
+    "CO2": "CO2",
+    "SO2": "SO2",
+    "O2": "O2",
+    "SO3": "SO3",
+    "NO": "NO",
+    "H2O": "H2O_HITEMP",
+    "CO": "CO_all_iso_HITEMP",
+    "O": "O",
+    "OH": "OH",
+    "NaCl": "NaCl",
+    "KCl": "KCl",
+    "KF": "KF",
+    "NaF": "NaF",
+    "Na": "Na_allard",
+    "NaOH": "NaOH",
+    "O3": "O3",
+    "K": "K_allard",
+    "N2": "N2",
+}
+
+RADIATIVE_MOLECULES = [
+    "CO2",
+    "SO2",
+    "O2",
+    "SO3",
+    "H2O",
+    "CO",
+    "O",
+    "OH",
+    "NaCl",
+    "KCl",
+    "KF",
+    "NaF",
+    "Na",
+    "O3",
+    "K",
+    # "NO", "NaOH" [something wrong with the opacity files]
+]
+
+RAYLEIGH_MOLECULES = ["CO2", "H2O", "O2", "N2", "CO"]
+
+CONTINUUM_OPACITIES = [
+    "N2-N2",
+    "O2-O2",
+    "N2-O2",
+    "CO2-CO2",
+]
 
 
 ## Utils for running a very specific grid thing I needed once
@@ -465,168 +548,3 @@ def create_ggchem_results_df(results_file):
     df_processed = df_processed.rename(columns={"Tg": "T_K", "pgas": "p_bar"})
 
     return df_processed
-
-
-## -----------------------
-## Consistent plotting tools
-def plot_spectra(wavelengths_um, spectra, cols, labels=None):
-    """
-    Plots a set of spectra in my standard format,
-    with inputted colours (and optionally labels)
-    """
-    fg, ax = plt.subplots(figsize=(15, 5))
-    if labels:
-        for spectrum, col, label in zip(spectra, cols, labels):
-            ax.plot(wavelengths_um, spectrum, c=col, label=label)
-        ax.legend()
-    else:
-        for spectrum, col in zip(spectra, cols):
-            ax.plot(wavelengths_um, spectrum, c=col)
-    ax.set_xlim([0.3, 15])
-    ax.set_xscale("log")
-    xtix = [0.4, 0.6, 0.8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14]
-    ax.set_xticks(xtix)
-    ax.set_xticklabels(xtix)
-    ax.set_xlabel(r"$\lambda/\mu$m")
-    ax.set_ylabel(r"Transit Radius / $R_J$")
-    return fg
-
-
-def squarsh(df, key, grid_size=100):
-    """
-    Squashes a df into a square and returns a np array
-    """
-    df2 = df.copy()
-    return df2[key].to_numpy().reshape(grid_size, grid_size)
-
-
-def plot_grid(df, gas=None, cond=None, **kwargs):
-    """
-    Plots abundance grids. Don't know why I didn't define a function for this earlier
-    """
-    grid_size = int(np.sqrt(len(df)))
-
-    if gas:
-        field = gas
-        cmp = cm.Greens
-    elif cond:
-        field = f"n{cond}"
-        cmp = cm.Oranges
-
-    fg, ax = plt.subplots()
-    contf = ax.pcolormesh(
-        squarsh(df, "T_K", grid_size=grid_size),
-        squarsh(df, "p_bar", grid_size=grid_size),
-        squarsh(df, field, grid_size=grid_size),
-        vmin=0,
-        vmax=np.max(df[field]),
-        cmap=cmp,
-        **kwargs,
-    )
-    ax.set_yscale("log")
-    fg.colorbar(contf, ax=ax)
-    return fg
-
-
-## ------------------------------------
-## petitRADTRANS tools
-
-Molecule = namedtuple("Molecule", "GGchem_name pRT_filename mmw")
-
-CO2 = Molecule("CO2", "CO2", 44.01)
-SO2 = Molecule("SO2", "SO2", 64.066)
-O2 = Molecule("O2", "O2", 31.999)
-SO3 = Molecule("SO3", "SO3", 80.06)
-NO = Molecule("NO", "NO", 30.01)
-H2O = Molecule("H2O", "H2O_HITEMP", 18.01528)
-CO = Molecule("CO", "CO_all_iso_HITEMP", 28.01)
-O = Molecule("O", "O", 15.999)
-OH = Molecule("OH", "OH", 17.01)
-NaCl = Molecule("NACL", "NaCl", 58.44)
-KCl = Molecule("KCL", "KCl", 74.55)
-KF = Molecule("KF", "KF", 58.10)
-NaF = Molecule("NAF", "NaF", 41.99)
-Na = Molecule("Na", "Na_allard", 22.99)
-NaOH = Molecule("NAOH", "NaOH", 40.00)
-O3 = Molecule("O3", "O3", 48.00)
-K = Molecule("K", "K_allard", 39.098)
-N2 = Molecule("N2", "N2", 28.02)
-
-ALL_MOLECULES = [
-    CO2,
-    SO2,
-    O2,
-    SO3,
-    H2O,
-    CO,
-    O,
-    OH,
-    NaCl,
-    KCl,
-    KF,
-    NaF,
-    Na,
-    O3,
-    K,
-    N2,
-    NO,
-    NaOH,
-]
-all_molecules_GGchem_names = np.array(
-    [molecule.GGchem_name for molecule in ALL_MOLECULES]
-)
-all_molecules_mmws = np.array([molecule.mmw for molecule in ALL_MOLECULES])
-
-RADIATIVE_MOLECULES = [
-    CO2,
-    SO2,
-    O2,
-    SO3,
-    H2O,
-    CO,
-    O,
-    OH,
-    NaCl,
-    KCl,
-    KF,
-    NaF,
-    Na,
-    O3,
-    K,
-    # NO, NaOH [something wrong with the opacity files]
-]
-
-RAYLEIGH_MOLECULES = [CO2, H2O, O2, N2, CO]
-
-CONTINUUM_OPACITIES = [
-    "N2-N2",
-    "O2-O2",
-    "N2-O2",
-    "CO2-CO2",
-]
-
-
-def calc_MMW(molecules_GGchem_names, VMRs):
-    """
-    Calculates the overall MMW of a gas, given the
-    mixing ratios of the major components.
-
-    Accepts a list of the VMRs of gases, along with a list of their names.
-    This list must include all of the gases in all_molecules above
-    """
-    if len(VMRs) != len(molecules_GGchem_names):
-        raise IndexError(
-            f"{len(VMRs)} VMRs given, but {len(molecules_GGchem_names)} names."
-        )
-
-    sum_VMRi_mui = sum(
-        VMRs[molecules_GGchem_names == mol_name] * mol_mmw
-        for mol_name, mol_mmw in zip(all_molecules_GGchem_names, all_molecules_mmws)
-    )
-    sum_VMRi = sum(
-        VMRs[molecules_GGchem_names == mol_name]
-        for mol_name in all_molecules_GGchem_names
-    )
-
-    mmw = sum_VMRi_mui / sum_VMRi
-    return mmw

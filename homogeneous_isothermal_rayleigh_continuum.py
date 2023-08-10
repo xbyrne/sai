@@ -5,33 +5,28 @@ included
 """
 
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from petitRADTRANS import Radtrans
 from petitRADTRANS import nat_cst as nc
-from . import myutils
+import myutils
 
 # -----------------------------------------
-# Loading and dealing out data
-print("Loading Data...")
-fl = np.load("/data/ajnb3/results/grid/grid_results.npz", allow_pickle=True)
-T_K = fl["T_K"]
-p_bar = fl["p_bar"]
-gas_species_names = fl["gas_species_names"]
-gas_species_mr = fl["gas_species_mr"]
-mmw = myutils.calc_MMW(gas_species_names, gas_species_mr)
-
-# Selecting data only along trans-boundary transect
-transect_3d = np.s_[:, 15:55, 68]
-transect = transect_3d[1:]
-gas_mr_transect = gas_species_mr[transect_3d]
-T_transect = T_K[transect]
-p_transect = p_bar[transect]
-mmw_transect = mmw[transect]
-
+# Loading and dealing out dat
+surface_df = pd.read_csv("/data/ajnb3/results/summer/venus_1400.csv")
+gas_df = surface_df[[col for col in surface_df.columns if col[0] != "n"][3:]]
+vmr_df = (10**gas_df).div((10**gas_df).sum(axis=1), axis=0)
+rel_mass_df = vmr_df * [myutils.mr(col) for col in vmr_df.columns]
+mmw_srs = rel_mass_df.sum(axis=1)
+mass_frac_df = rel_mass_df.div(mmw_srs, axis=0)
 
 atmosphere = Radtrans(
-    line_species=[mol.pRT_filename for mol in myutils.RADIATIVE_MOLECULES],
-    rayleigh_species=[mol.pRT_filename for mol in myutils.RAYLEIGH_MOLECULES],
+    line_species=[
+        myutils.pRT_filename_dict[mol] for mol in myutils.RADIATIVE_MOLECULES
+    ],
+    rayleigh_species=[
+        myutils.pRT_filename_dict[mol] for mol in myutils.RAYLEIGH_MOLECULES
+    ],
     continuum_opacities=[
         "N2-N2",
         "O2-O2",
@@ -41,44 +36,36 @@ atmosphere = Radtrans(
     wlen_bords_micron=[0.3, 15],
 )
 
-R_pl = 0.95 * nc.r_earth
+R_VENUS = 0.95 * nc.r_earth
 GRAVITY = 10**2.94
+pRT_folders = myutils.pRT_filename_dict
 
 print("Beginning calculations")
-for i, (T, p, mmw, gmr) in tqdm(
-    enumerate(zip(T_transect, p_transect, mmw_transect, gas_mr_transect.T)),
-    total=len(T_transect),
+for i, (p, mmw, (_, mass_fracs)) in tqdm(
+    enumerate(zip(surface_df.p_bar, mmw_srs, mass_frac_df.iterrows())), total=100
 ):
-    pressures = np.logspace(-8, np.log10(p), 100)
-    one = np.ones_like(pressures)
-    temperature = T * one
-    MMW = mmw * one
+    atm_pressures = np.logspace(-8, np.log10(p), 100)
+    atm_temperatures = 1400.0 * np.ones_like(atm_pressures)
+    atm_MMWs = mmw * np.ones_like(atm_pressures)
+    mass_fractions = {
+        mol: mf * np.ones_like(atm_pressures)
+        for mol, mf in zip(pRT_folders.values(), mass_fracs[pRT_folders.keys()])
+    }
 
-    atmosphere.setup_opa_structure(pressures)
-
-    mass_fractions = {}
-    for molecule in myutils.ALL_MOLECULES:
-        mass_fractions[molecule.pRT_filename] = (
-            gmr[gas_species_names == molecule.GGchem_name][0] * molecule.mmw / mmw
-        )
-
+    atmosphere.setup_opa_structure(atm_pressures)
     atmosphere.calc_transm(
-        temperature, mass_fractions, GRAVITY, MMW, R_pl=R_pl, P0_bar=p
+        atm_temperatures, mass_fractions, GRAVITY, atm_MMWs, R_pl=R_VENUS, P0_bar=p
     )
 
     if i == 0:
-        wavelengths_um = nc.c / atmosphere.freq / 1e-4
-        transit_radius_RJ_grid = np.zeros(wavelengths_um.shape + T_transect.shape)
+        wavelengths_um = atmosphere.transm_rad / nc.r_jup_mean
+        transit_radius_RJ_grid = np.zeros(wavelengths_um.shape + surface_df.p_bar.shape)
 
     transit_radius_RJ = atmosphere.transm_rad / nc.r_jup_mean
     transit_radius_RJ_grid[:, i] = transit_radius_RJ
 
+spectra_df = pd.DataFrame(data=transit_radius_RJ_grid, columns=wavelengths_um)
+
 print("Saving Data")
-np.savez_compressed(
-    "/data/ajnb3/results/petitRADTRANS/homogeneous_isothermal_rayleigh_continuum_spectra.npz",
-    T_K=T_transect,
-    p_bar=p_transect,
-    wavelengths_um=wavelengths_um,
-    transit_radius_RJ=transit_radius_RJ_grid,
-)
+pd.to_csv("/data/ajnb3/results/summer/spectra_1400.csv")
 print("Done")
