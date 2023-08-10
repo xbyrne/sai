@@ -58,14 +58,14 @@ for i, (p, mmw, (_, mass_fracs)) in tqdm(
     )
 
     if i == 0:
-        wavelengths_um = atmosphere.transm_rad / nc.r_jup_mean
+        wavelengths_um = nc.c / atmosphere.freq / 1e-4
         transit_radius_RJ_grid = np.zeros(wavelengths_um.shape + surface_df.p_bar.shape)
 
     transit_radius_RJ = atmosphere.transm_rad / nc.r_jup_mean
     transit_radius_RJ_grid[:, i] = transit_radius_RJ
 
-spectra_df = pd.DataFrame(data=transit_radius_RJ_grid, columns=wavelengths_um)
+spectra_df = pd.DataFrame(data=transit_radius_RJ_grid.T, columns=wavelengths_um)
 
 print("Saving Data")
-pd.to_csv("/data/ajnb3/results/summer/spectra_1400.csv")
+spectra_df.to_csv("/data/ajnb3/results/summer/spectra_1400.csv")
 print("Done")
