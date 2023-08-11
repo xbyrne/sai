@@ -1,8 +1,11 @@
+abund_Earth.in
 abund_SharpHuebner.dat
 abund_simple.in
 abund_Ca*
 abund_O*
+abund_S*
 abund_Venus_copy.in
+abund_Venus_*O.in
 data
 database.dat
 demo_eqchem.pdf
