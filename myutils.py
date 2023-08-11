@@ -375,32 +375,45 @@ def squarsh(df, key, grid_size=100):
     return df2[key].to_numpy().reshape(grid_size, grid_size)
 
 
-def atm_demo(dfs, title_list, i_demo, figheight=None):
+def atm_demo(dfs, i_demo, title_list=None, figheight=None):
     """
     For a set of GGchem results dfs from 0.1 to 1e2bar, creates a figure showing
     the atmospheric composition along the transect
     """
-    assert len(dfs) == len(title_list)
+    if title_list is not None:
+        if len(title_list) == len(dfs):
+            title_list = [title_list[i] for i in i_demo]
+        elif len(title_list) != len(i_demo):
+            raise AssertionError(
+                f"Title list has the wrong length. Should be either number of dfs ({len(dfs)})\
+                      or number of panels ({len(i_demo)}); got {len(title_list)}."
+            )
+    dfs = [dfs[i] for i in i_demo]
     if figheight is None:
-        figheight = 3 * len(i_demo)
-    col_dict = {"O2": "b", "CO2": "g", "SO2": "r", "SO3": "orange", "N2": "gray"}
-    fg, axs = plt.subplots(3, 1, figsize=(7, figheight), gridspec_kw={"hspace": 0})
-    for i, ax in zip(i_demo, axs):
-        df = dfs[i]
-        vmr_srs = [VMR(df, gas) for gas in col_dict]
+        figheight = 2.5 * len(i_demo)
+
+    col_dict = {"N2": "gray", "SO3": "orange", "CO2": "g", "O2": "b", "SO2": "r"}
+    fg, axs = plt.subplots(
+        len(i_demo), 1, figsize=(7, figheight), gridspec_kw={"hspace": 0}
+    )
+    for j, ax in enumerate(axs):
+        df = dfs[j]
+        vmr_srs = [VMR(df, gas) for gas in col_dict.keys()]
         ax.stackplot(
             df.p_bar, vmr_srs, labels=col_dict.keys(), colors=col_dict.values()
         )
         ax.set_xscale("log")
         ax.set_xlim(0.1, 1e2)
         ax.set_ylim(0, 1)
-        ax.legend(fontsize=14)
-        ax.set_title(f"{title_list[i]:.2f}", y=0.7)
+        ax.set_title(title_list[j], y=0.7)
         if ax == axs[-1]:
             ax.set_xlabel(r"$p_0$ / bar")
+            ax.set_yticks([0.,.2,.4,.6,.8,1.])
         else:
             ax.set_xticks([])
             ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
+    axs[0].legend(fontsize=14, loc='lower left', reverse=True)
+    fg.supylabel('VMRs')
     return fg
 
 
