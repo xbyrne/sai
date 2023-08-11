@@ -409,10 +409,10 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
         if ax == axs[-1]:
             ax.set_xlabel(r"$p_0$ / bar")
             ax.set_yticks([0.,.2,.4,.6,.8,1.])
+            ax.legend(fontsize=14, loc='lower right', reverse=True)
         else:
             ax.set_xticks([])
             ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-    axs[0].legend(fontsize=14, loc='lower left', reverse=True)
     fg.supylabel('VMRs')
     return fg
 
