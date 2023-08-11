@@ -392,7 +392,8 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
     if figheight is None:
         figheight = 2.5 * len(i_demo)
 
-    col_dict = {"N2": "gray", "SO3": "orange", "CO2": "g", "O2": "b", "SO2": "r"}
+    col_dict = {"N2": "gray", "CO2": "b", "O2": "g", "SO3": "orange", "SO2": "r"}
+
     fg, axs = plt.subplots(
         len(i_demo), 1, figsize=(7, figheight), gridspec_kw={"hspace": 0}
     )
@@ -405,7 +406,8 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
         ax.set_xscale("log")
         ax.set_xlim(0.1, 1e2)
         ax.set_ylim(0, 1)
-        ax.set_title(title_list[j], y=0.7)
+        ax.set_title(title_list[j], y=0.7, x=.035, loc='left')
+
         if ax == axs[-1]:
             ax.set_xlabel(r"$p_0$ / bar")
             ax.set_yticks([0.,.2,.4,.6,.8,1.])
