@@ -415,6 +415,7 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
         else:
             ax.set_xticks([])
             ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
+        ax.tick_params(axis='x', which='major', pad=5)
     fg.supylabel('VMRs')
     return fg
 
