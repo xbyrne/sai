@@ -319,6 +319,15 @@ def VMR(df, gas_species):
     return gas_cm3[gas_species].div(gas_cm3.sum(axis=1), axis=0)
 
 
+def MF(df, mineral="CaSO4"):
+    """
+    Returns a series containing the mole fraction of the specified mineral
+    (default: CaSO4) among the condensates for each row in the df
+    """
+    mineral_cm3 = 10 ** df[[col for col in df.columns if col[0] == "n"][1:]]
+    return mineral_cm3[f"n{mineral}"].div(mineral_cm3.sum(axis=1), axis=0)
+
+
 def log_f(df, gas_species):
     """
     Returns a series containing the log(fugacity/bar) of the given
@@ -399,24 +408,25 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
     )
     for j, ax in enumerate(axs):
         df = dfs[j]
-        vmr_srs = [VMR(df, gas) for gas in col_dict.keys()]
+        vmr_srs = [VMR(df, gas) for gas in col_dict]
         ax.stackplot(
             df.p_bar, vmr_srs, labels=col_dict.keys(), colors=col_dict.values()
         )
+
         ax.set_xscale("log")
         ax.set_xlim(0.1, 1e2)
         ax.set_ylim(0, 1)
-        ax.set_title(title_list[j], y=0.7, x=.035, loc='left')
+        ax.set_title(title_list[j], y=0.7, x=0.035, loc="left")
 
         if ax == axs[-1]:
             ax.set_xlabel(r"$p_0$ / bar")
-            ax.set_yticks([0.,.2,.4,.6,.8,1.])
-            ax.legend(fontsize=14, loc='lower right', reverse=True)
+            ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+            ax.legend(fontsize=14, loc="lower right", reverse=True)
         else:
             ax.set_xticks([])
             ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.tick_params(axis='x', which='major', pad=5)
-    fg.supylabel('VMRs')
+        ax.tick_params(axis="x", which="major", pad=5)
+    fg.supylabel("VMRs")
     return fg
 
 
