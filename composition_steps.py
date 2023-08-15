@@ -34,7 +34,20 @@ def alter_O():
     Alters O composition, generates lines at 1400K
     """
     for O_abund in [
-        19.559071, 19.5590695, 19.559069, 19.5590685
+        19.559071,
+        19.559072,
+        19.559073,
+        19.559074,
+        19.559076,
+        19.559077,
+        19.559079,
+        19.559081,
+        19.559082,
+        19.559083,
+        19.559084,
+        19.559086,
+        19.559087,
+        19.559088,
     ]:
         abund_number = int(str(O_abund)[3:])
         print(f"Currently running for number {abund_number}")
@@ -56,9 +69,7 @@ def alter_S():
     """
     Alters S composition, generates lines at 1400K
     """
-    eps_Ss = [
-        17.881, 17.8823, 17.883, 17.8833, 17.8836
-    ]
+    eps_Ss = [17.8821, 17.8822, 17.8824, 17.8825, 17.8826, 17.8827, 17.8828, 17.8829, 17.8831]
     for S_abund in eps_Ss:
         abund_code = "abund_S"
         print(f"Currently running for eps_S={S_abund}")
