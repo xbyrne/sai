@@ -384,27 +384,20 @@ def squarsh(df, key, grid_size=100):
     return df2[key].to_numpy().reshape(grid_size, grid_size)
 
 
-def atm_demo(dfs, i_demo, title_list=None, figheight=None):
+def atm_demo(dfs, title_list=None, figheight=None):
     """
     For a set of GGchem results dfs from 0.1 to 1e2bar, creates a figure showing
     the atmospheric composition along the transect
     """
-    if title_list is not None:
-        if len(title_list) == len(dfs):
-            title_list = [title_list[i] for i in i_demo]
-        elif len(title_list) != len(i_demo):
-            raise AssertionError(
-                f"Title list has the wrong length. Should be either number of dfs ({len(dfs)})\
-                      or number of panels ({len(i_demo)}); got {len(title_list)}."
-            )
-    dfs = [dfs[i] for i in i_demo]
+    if title_list is None:
+        title_list=[''] * len(dfs)
     if figheight is None:
-        figheight = 2.5 * len(i_demo)
+        figheight = 2.5 * len(dfs)
 
-    col_dict = {"N2": "gray", "CO2": "b", "O2": "g", "SO3": "orange", "SO2": "r"}
+    col_dict = {"N2": "#aaaaaa", "O2": "#7570b3", "CO2": "#e7298a", "SO2": "#66a61e", "SO3": "#1b9e77"}
 
     fg, axs = plt.subplots(
-        len(i_demo), 1, figsize=(7, figheight), gridspec_kw={"hspace": 0}
+        len(dfs), 1, figsize=(7, figheight), gridspec_kw={"hspace": 0}
     )
     for j, ax in enumerate(axs):
         df = dfs[j]
@@ -412,6 +405,15 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
         ax.stackplot(
             df.p_bar, vmr_srs, labels=col_dict.keys(), colors=col_dict.values()
         )
+        ax2 = ax.twinx()
+        ax2.plot(
+            df.p_bar, MF(df, 'CaSO4'), 'k'
+        )
+        # ax2.plot(
+        #     df.p_bar, MF(df, 'CaMgSi2O6'), 'white'
+        # )
+        ax2.set_xscale('log')
+        ax2.set_ylim(0,.14)
 
         ax.set_xscale("log")
         ax.set_xlim(0.1, 1e2)
@@ -421,12 +423,17 @@ def atm_demo(dfs, i_demo, title_list=None, figheight=None):
         if ax == axs[-1]:
             ax.set_xlabel(r"$p_0$ / bar")
             ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-            ax.legend(fontsize=14, loc="lower right", reverse=True)
+            leg = ax.legend(fontsize=14, loc="lower right", reverse=True)
+            leg.remove()
+            ax2.add_artist(leg)
         else:
             ax.set_xticks([])
             ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
         ax.tick_params(axis="x", which="major", pad=5)
+
     fg.supylabel("VMRs")
+    fg.text(.98, .5, f'Mole Fraction {chemlatex("CaSO4")}', rotation=90, verticalalignment='center')
+
     return fg
 
 
