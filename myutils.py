@@ -413,26 +413,31 @@ def atm_demo(dfs, title_list=None, figheight=None):
         #     df.p_bar, MF(df, 'CaMgSi2O6'), 'white'
         # )
         ax2.set_xscale('log')
-        ax2.set_ylim(0,.14)
+        ax2.set_ylim(0,.13)
 
         ax.set_xscale("log")
-        ax.set_xlim(0.1, 1e2)
+        ax.set_xlim(.1,1e2)
         ax.set_ylim(0, 1)
         ax.set_title(title_list[j], y=0.7, x=0.035, loc="left")
 
+        ax.set_xlabel(r"$p_0$ / bar", fontsize=24)
         if ax == axs[-1]:
-            ax.set_xlabel(r"$p_0$ / bar")
-            ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-            leg = ax.legend(fontsize=14, loc="lower right", reverse=True)
+            ax.set_yticks([0.0, 0.5, 1.0])
+            leg = ax.legend(fontsize=15, loc="lower right", reverse=True)
             leg.remove()
             ax2.add_artist(leg)
+            ax.tick_params(axis='x', which='major', pad=10)
         else:
-            ax.set_xticks([])
-            ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.tick_params(axis="x", which="major", pad=5)
-
-    fg.supylabel("VMRs")
-    fg.text(.98, .5, f'Mole Fraction {chemlatex("CaSO4")}', rotation=90, verticalalignment='center')
+            ax.set_xticklabels([])
+            ax.set_yticks([0.5, 1.0])
+        ax.set_yticks([.1,.2,.3,.4,.6,.7,.8,.9], minor=True)
+        ax2.set_yticks([.01, .02,.03,.04,.06,.07,.08,.09,.1,.11,.12,.13],
+                       minor=True)
+        ax.tick_params(which='major', axis='x', length=5)
+        ax.tick_params(which='minor', axis='x', length=3)
+    
+    fg.supylabel("VMRs", fontsize=26, x=-.01)
+    fg.text(1.02, .5, f'Mole Fraction of {chemlatex("CaSO4")}', rotation=90, verticalalignment='center', fontsize=24)
 
     return fg
 
