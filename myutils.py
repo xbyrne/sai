@@ -433,7 +433,7 @@ def atm_demo(dfs, title_list=None, figheight=None):
         ax.set_yticks([.1,.2,.3,.4,.6,.7,.8,.9], minor=True)
         ax2.set_yticks([.01, .02,.03,.04,.06,.07,.08,.09,.1,.11,.12,.13],
                        minor=True)
-        ax.tick_params(which='major', axis='x', length=5)
+        ax.tick_params(which='major', axis='x', length=5, pad=11)
         ax.tick_params(which='minor', axis='x', length=3)
     
     fg.supylabel("VMRs", fontsize=26, x=-.01)
