@@ -403,7 +403,9 @@ def atm_demo(dfs, title_list=None, figheight=None):
         df = dfs[j]
         vmr_srs = [VMR(df, gas) for gas in col_dict]
         ax.stackplot(
-            df.p_bar, vmr_srs, labels=col_dict.keys(), colors=col_dict.values()
+            df.p_bar, vmr_srs, labels=[
+                chemlatex(key) for key in col_dict.keys()
+            ], colors=col_dict.values()
         )
         ax2 = ax.twinx()
         ax2.plot(
