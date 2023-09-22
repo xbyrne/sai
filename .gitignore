@@ -1,7 +1,6 @@
 ## Basic things to ignore
 \#*
 *~
-*.ipynb
 .ipynb_checkpoints/*
 .vscode/*
 __pycache__/*
@@ -9,7 +8,16 @@ grid/__pycache__/*
 grid/.ipynb_checkpoints/*
 mymodules/__pycache__/*
 petitRADTRANS/.ipynb_checkpoints/*
-venus/.ipynb_checkpoints/*
+venus_results/.ipynb_checkpoints/*
+
+analysing_grids_differently.ipynb
+element_pie.ipynb
+pT_grid_analysis.ipynb
+retrievals.ipynb
+spectral_analysis.ipynb
+tweaked_grids.ipynb
+venus_altitude_composition.ipynb
 
 ## Big files, compressed version in the repo somewhere else
+bin/
 grid/grid_output.dat
