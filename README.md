@@ -1,5 +1,4 @@
 # sai
 Surface-Atmosphere Interactions on Warm Exoplanets
 
-## Venus
-Firstly, run ```bash venus/make_abund.sh``` to create abundance files (```abund_Venus.in``` and ```mfrac_Venus.in```) for Venus and move them to the GGchem folder.
+Code used for [Byrne et. al. 2024](https://ui.adsabs.harvard.edu/abs/2024MNRAS.52710748B/abstract).
